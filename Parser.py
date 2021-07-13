@@ -2,7 +2,11 @@ import re
 from datetime import datetime, date, time
 
 
-def parse(text: str):
+def parse(text: str) -> list:
+    """
+    Takes a block of text and parses each line into record containers messages.
+    Returns a list of tuples (TODO message objects).
+    """
     total = 0
     missed = 0
     msgs = []
@@ -15,8 +19,8 @@ def parse(text: str):
 
             msg_sender = metadata[metadata.find("-") + 2:]
             msg_body = s[s.find(":", 15) + 2:]
-            # msg = Message(msg_date, msg_time, msg_sender, msg_body)
-            msg = [msg_date, msg_time, msg_sender, msg_body]
+            # msg = Message(msg_datetime, msg_sender, msg_body)
+            msg = (msg_date, msg_time, msg_sender, msg_body)
             msgs.append(msg)
         except:
             missed += 1

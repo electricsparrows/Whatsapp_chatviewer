@@ -1,7 +1,6 @@
-# Press Shift+F10 to execute it or replace it with your code.
-
+from datetime import datetime
 import time
-import Parser
+from Parser import parse
 
 
 def loadfile(path):
@@ -21,42 +20,54 @@ def get_load_time():
 
 
 class Message:
-    def __init__(self, date, time, sender, msg):
-        self.__date = date
-        self.__time = time
+    def __init__(self, dt, sender, msg):
+        self.__datetime = dt
         self.__sender = sender
         self.__msg = msg
 
-    def get_meta_data(self):
-        return f"{self.__date} , {self.__time} -- {self.__sender}"
+    def get_metadata(self):
+        return f"{self.get_date()} , {self.get_time().hour}:{self.get_time().min} -- {self.__sender}"
 
-    def get_time(self):
-        return self.__time
+    def get_date(self) -> datetime.date:
+        return self.__datetime.date()
+
+    def get_time(self) -> datetime.time:
+        return self.__datetime.time()
+
+    def get_hourmin(self):
+        """return 2-tup (hh:mm)"""
+        t = self.__datetime.time()
+        return (t.hour, t.min)
 
     def get_message(self):
         return self.__msg
 
     def __str__(self):
-        return self.get_meta_data() + ": " + self.get_message()
+        return self.get_metadata() + ": " + self.get_message()
 
     def __eq__(self, other):
         if isinstance(other, Message):
-            return self.get_meta_data() == other.get_meta_data() and self.get_message() == other.get_message()
+            return self.get_metadata() == other.get_metadata() and self.get_message() == other.get_message()
         else:
             return False
 
     ## timeDifference(self, other):  #returns difference in time between two messages in mins
 
 
-class Date:
+class DateOps:
     # TODO extend datetime
-    def __init__(self, d, m, y):
-        self.DAY = d
-        self.MONTH = m
-        self.YEAR = y
+    def __init__(self, dt):
+        __date = dt.date()
+        self.DAY = __date.DAY
+        self.MONTH = __date.MONTH
+        self.YEAR = __date.YEAR
+
+    def get_days_in_months(self):
+        return [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
 
     def increment(self):
-        dates = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
+        # TODO rewrite to update the __date object
+        dates = self.get_days_in_months()
         if self.DAY > dates[self.MONTH - 1]:
             self.DAY = 1
             if self.MONTH + 1 > 12:
@@ -65,8 +76,8 @@ class Date:
             else:
                 self.MONTH += 1
 
-    def get_next_date(self):
-        dates = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
+    def get_next_day(self) -> datetime:
+        dates = self.get_days_in_months()
         d = self.DAY + 1
         m = self.MONTH
         y = self.YEAR
@@ -77,8 +88,12 @@ class Date:
                 m = 1
             else:
                 m = self.MONTH + 1
-        return Date(d, m, y)
+        return datetime(y, m, d)
 
+    # get prev date
+    # decrement
+
+    # these functions are redundant with datetime -- TODO delete
     def __str__(self):
         return f"{self.DAY}/{self.MONTH}/{self.YEAR}"
 
@@ -123,6 +138,7 @@ def indexDates(msgs: list):  # this needs to be a singleton
     return index
 
 
+# TODO update getMessagesAtDate to use datetime
 def getMessagesAtDate(date: Date, msgs: list):
     mm = datemonth_formatter(date.MONTH)
     dd = datemonth_formatter(date.DAY)
@@ -162,6 +178,7 @@ def year_formatter(n: int):
     return numstr
 
 
+# TODO refactor get_messages_from_date_to_date() to use datetime
 def getMessagesFromDateToDate(date1: Date, date2: Date, msgs: list):
     res = []
     current_date = date1
