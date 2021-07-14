@@ -4,8 +4,8 @@ from datetime import datetime, date, time
 
 def parse(text: str) -> list:
     """
-    Takes a block of text and parses each line into record containers messages.
-    Returns a list of tuples (TODO message objects).
+    Takes a block of text and parses each line into message objects.
+    Returns a list of message container objects.
     """
     total = 0
     missed = 0
@@ -19,8 +19,8 @@ def parse(text: str) -> list:
 
             msg_sender = metadata[metadata.find("-") + 2:]
             msg_body = s[s.find(":", 15) + 2:]
-            # msg = Message(msg_datetime, msg_sender, msg_body)
-            msg = (msg_date, msg_time, msg_sender, msg_body)
+            msg = Message(msg_datetime, msg_sender, msg_body)
+            # msg = (msg_date, msg_time, msg_sender, msg_body)
             msgs.append(msg)
         except:
             missed += 1
@@ -30,6 +30,41 @@ def parse(text: str) -> list:
 
     print(f"Total messages: {total}; missed: {missed}")
     return msgs
+
+
+class Message:
+    def __init__(self, dt, sender, msg):
+        self.__datetime = dt
+        self.__sender = sender
+        self.__msg = msg
+
+    def get_metadata(self):
+        return f"{self.get_date()} , {self.get_time().hour}:{self.get_time().min} -- {self.__sender}"
+
+    def get_date(self) -> datetime.date:
+        return self.__datetime.date()
+
+    def get_time(self) -> datetime.time:
+        return self.__datetime.time()
+
+    def get_hourmin(self):
+        """return 2-tup (hh:mm)"""
+        t = self.__datetime.time()
+        return (t.hour, t.min)
+
+    def get_message(self):
+        return self.__msg
+
+    def __str__(self):
+        return self.get_metadata() + ": " + self.get_message()
+
+    def __eq__(self, other):
+        if isinstance(other, Message):
+            return self.get_metadata() == other.get_metadata() and self.get_message() == other.get_message()
+        else:
+            return False
+
+    ## timeDifference(self, other):  #returns difference in time between two messages in mins
 
 
 def get_date(s : str):
