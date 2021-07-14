@@ -1,5 +1,6 @@
 import re
 from datetime import datetime, date, time
+from message import Message
 
 
 def parse(text: str) -> list:
@@ -13,9 +14,9 @@ def parse(text: str) -> list:
     for s in text:
         try:
             metadata = s[:s.find(":", 15)]
-            msg_date = get_date(metadata)       # --> date object
-            msg_time = get_time_match(metadata) # --> time object
-            dt = datetime.combine(msg_date, msg_time)
+            msg_date = get_date(metadata)       # --> dt.date object
+            msg_time = get_time_match(metadata) # --> dt.time object
+            msg_datetime = datetime.combine(msg_date, msg_time)
 
             msg_sender = metadata[metadata.find("-") + 2:]
             msg_body = s[s.find(":", 15) + 2:]
@@ -30,41 +31,6 @@ def parse(text: str) -> list:
 
     print(f"Total messages: {total}; missed: {missed}")
     return msgs
-
-
-class Message:
-    def __init__(self, dt, sender, msg):
-        self.__datetime = dt
-        self.__sender = sender
-        self.__msg = msg
-
-    def get_metadata(self):
-        return f"{self.get_date()} , {self.get_time().hour}:{self.get_time().min} -- {self.__sender}"
-
-    def get_date(self) -> datetime.date:
-        return self.__datetime.date()
-
-    def get_time(self) -> datetime.time:
-        return self.__datetime.time()
-
-    def get_hourmin(self):
-        """return 2-tup (hh:mm)"""
-        t = self.__datetime.time()
-        return (t.hour, t.min)
-
-    def get_message(self):
-        return self.__msg
-
-    def __str__(self):
-        return self.get_metadata() + ": " + self.get_message()
-
-    def __eq__(self, other):
-        if isinstance(other, Message):
-            return self.get_metadata() == other.get_metadata() and self.get_message() == other.get_message()
-        else:
-            return False
-
-    ## timeDifference(self, other):  #returns difference in time between two messages in mins
 
 
 def get_date(s : str):

@@ -1,6 +1,6 @@
 import pytest
 from datetime import datetime, date, time
-from Parser import *
+from parser import *
 
 
 def test_get_date1():
@@ -52,4 +52,4 @@ def test_get_time3():
     assert get_time("10-23-19, 15:21") == time(15, 21)
 
 
-# TODO write unit Parser tests
+# TODO write unit Parser test
