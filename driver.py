@@ -1,6 +1,6 @@
 from datetime import datetime
 import time
-from Parser import parse
+from parser import parse
 
 
 def loadfile(path):
@@ -17,7 +17,6 @@ def get_load_time():
     end = time.perf_counter()
     res = end - start
     print("performance: " + str(res) + "s")
-
 
 
 # TODO update getMessagesAtDate to use datetime -- this thing needs to be rewritten

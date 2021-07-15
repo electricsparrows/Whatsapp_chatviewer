@@ -12,15 +12,16 @@ def indexDates(msgs: list):  # this needs to be a singleton
     return index
 
 
-class DateOps:
+class Date:
     # TODO extend datetime
-    def __init__(self, dt):
-        __date = dt.date()
+    def __init__(self, some_date):
+        __date = some_date.date()
         self.DAY = __date.DAY
         self.MONTH = __date.MONTH
         self.YEAR = __date.YEAR
 
-    def get_days_in_months(self):
+    @staticmethod
+    def get_days_in_months():
         return [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
 
     def increment(self):
