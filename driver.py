@@ -12,11 +12,12 @@ def loadfile(path):
 
 
 def get_load_time():
+    """For performance testing"""
     start = time.perf_counter()
     loadfile("test02.txt")
     end = time.perf_counter()
     res = end - start
-    print("performance: " + str(res) + "s")
+    print(f"performance: {res}s")
 
 
 # TODO update getMessagesAtDate to use datetime -- this thing needs to be rewritten
