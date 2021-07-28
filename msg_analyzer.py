@@ -8,7 +8,7 @@ msg1 = "don't think u had hallucinations in hk cuz i witnessed ur situation and 
 
 msg2 = "I don't think so. Don't think it's doable"
 
-stop_words = set(["u", "do", "i", "ur", "and"])
+stop_words = {"u", "do", "i", "ur", "and"}
 
 #probably split into sentences first
 word_tokens = nltk.word_tokenize(msg1)

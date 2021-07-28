@@ -1,6 +1,6 @@
-from datetime import datetime
 import time
-from parser import parse
+from filehandler import parse
+from dateutils import Date
 
 
 def loadfile(path):
@@ -20,14 +20,19 @@ def get_load_time():
     print(f"performance: {res}s")
 
 
-# TODO update getMessagesAtDate to use datetime -- this thing needs to be rewritten
-def getMessagesAtDate(date: str, msgs: list):
-    mm = __datemonth_formatter(date.MONTH)
-    dd = __datemonth_formatter(date.DAY)
-    yyyy = __year_formatter(date.YEAR)
+# TODO
+def get_messages_at_date(date: Date, msgs: list):
+    """
+    :param date: string representing a date in format YYYY-MM-DD
+    :param msgs: set of msg objects (list for now, connect to database later)
+    :return:
+    """
+    date_str = str(date.get_date())
+    yyyy = date_str[0:4]
+    mm = date_str[5:7]
+    dd = date_str[8:10]
     query = f"{mm}/{dd}/{yyyy}"  # haha this is bad
-    # index = indexDates(msgs)
-    return [m for m in msgs if m[0] == query]
+    return [m for m in msgs if str(m.get_date()) == query]
 
 
 def __datemonth_formatter(n: int):
@@ -60,13 +65,19 @@ def __year_formatter(n: int):
     return numstr
 
 
-# TODO refactor get_messages_from_date_to_date() to use datetime
-def getMessagesFromDateToDate(date1: Date, date2: Date, msgs: list):
+def get_messages_from_date_to_date(date1: Date, date2: Date, msgs: list) -> list:
+    """
+    Returns a list of message objects dated between date1 and date2 (exclusive)
+    :param date1: start date range
+    :param date2: end date range (exclusive)
+    :param msgs: list of message objects (TODO: retrieved from database)
+    :return: filtered list of messages
+    """
     res = []
     current_date = date1
     while current_date < date2:
         try:
-            res += getMessagesAtDate(current_date, msgs)
+            res += get_messages_at_date(current_date, msgs)
             current_date.increment()
         except:
             print(f"date {current_date} not found")
@@ -75,10 +86,11 @@ def getMessagesFromDateToDate(date1: Date, date2: Date, msgs: list):
 
 # Press the green button in the gutter to run the script.
 if __name__ == '__main__':
+    print("load a file")
     rawtext = loadfile("test02.txt")
     msgs = parse(rawtext)
     print("---------------------------------")
-    lt = getMessagesFromDateToDate(Date(10, 6, 2016), Date(9, 6, 2016), msgs)
-
-    for item in lt:
-        print(item)
+    print("Main menu:\n" +
+          "- summary stats + calendar view\n" +
+          "- view from beginning" +
+          "- view by date")

@@ -1,6 +1,10 @@
 import pytest
 from datetime import datetime, date, time
-from parser import *
+from filehandler import *
+
+#TODO - unit testing for parser function
+def parser():
+    assert False
 
 
 def test_get_date1():
@@ -50,6 +54,3 @@ def test_get_time2():
 
 def test_get_time3():
     assert get_time("10-23-19, 15:21") == time(15, 21)
-
-
-# TODO write unit Parser test

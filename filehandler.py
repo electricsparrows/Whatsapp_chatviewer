@@ -14,21 +14,26 @@ def parse(text: str) -> list:
     for s in text:
         try:
             metadata = s[:s.find(":", 15)]
+
             msg_date = get_date(metadata)       # --> dt.date object
-            msg_time = get_time_match(metadata) # --> dt.time object
+            msg_time = get_time(metadata)       # --> dt.time object
             msg_datetime = datetime.combine(msg_date, msg_time)
 
             msg_sender = metadata[metadata.find("-") + 2:]
+
             msg_body = s[s.find(":", 15) + 2:]
+
+            # store decomposed string in a message container.
             msg = Message(msg_datetime, msg_sender, msg_body)
-            # msg = (msg_date, msg_time, msg_sender, msg_body)
+
+            # import into 'Message' table
+
             msgs.append(msg)
         except:
             missed += 1
             # print(f"line no. {total}, raw line: {s}")
             pass
         total += 1
-
     print(f"Total messages: {total}; missed: {missed}")
     return msgs
 
