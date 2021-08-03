@@ -1,6 +1,7 @@
 import time
 from filehandler import parse
 from dateutils import Date
+from typing import List
 
 
 def loadfile(path):
@@ -21,18 +22,18 @@ def get_load_time():
 
 
 # TODO
-def get_messages_at_date(date: Date, msgs: list):
+def get_messages_at_date(date_str: str, msgs: List):
     """
     :param date: string representing a date in format YYYY-MM-DD
     :param msgs: set of msg objects (list for now, connect to database later)
-    :return:
+    :return: list of tuples
     """
-    date_str = str(date.get_date())
     yyyy = date_str[0:4]
     mm = date_str[5:7]
     dd = date_str[8:10]
-    query = f"{mm}/{dd}/{yyyy}"  # haha this is bad
-    return [m for m in msgs if str(m.get_date()) == query]
+    querystring = f"{mm}/{dd}/{yyyy}"  # haha this is bad
+
+    return [m for m in msgs if str(m.get_date()) == querystring]
 
 
 def __datemonth_formatter(n: int):
@@ -84,7 +85,33 @@ def get_messages_from_date_to_date(date1: Date, date2: Date, msgs: list) -> list
     return res
 
 
-command = { }
+def main_menu():
+    nav_menu = {
+        "s": NotImplemented,
+        "c": NotImplemented,
+        "d": get_messages_at_date,
+        "f": NotImplemented,
+        "r": NotImplemented
+    }
+
+    while True:
+        print("Main menu:\n" +
+
+              "- summary stats       (s)\n" +
+              "- calendar view       (c)\n" +
+              "- retrieve by date    (d)\n" +
+              "- view from beginning (f)\n" +
+              "- search messages     (s)")
+
+        command = input("Enter a command: >>>")
+        command = str(command).strip()
+        try:
+            nav_menu[command]()
+        except:
+            if command == "exit":
+                break
+            else:
+                print("no such command")
 
 # Press the green button in the gutter to run the script.
 if __name__ == '__main__':
@@ -92,20 +119,8 @@ if __name__ == '__main__':
     # load GUI (see import file screen)
     print("load a file")
     file = loadfile("test02.txt")
-    msgs = parse(file)
+    print(file)
+    # msgs = parse(file)
+    # print("---------------------------------")
 
-    # Connect Database -insert rows into the database.
-
-    print("---------------------------------")
-    print("Main menu:\n" +
-
-          "- summary stats + calendar view\n" +
-
-          # views the main thread -- SELECTS
-          "- view from beginning" +
-
-          # views the main thread -- SELECTS
-          "- view by date")
-
-
-    # Close database connection?
+    # Main menu

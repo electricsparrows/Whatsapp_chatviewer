@@ -1,10 +1,11 @@
 import re
 from datetime import datetime, date, time
 from dataclasses import dataclass
-# from message import Message
+import db
+from typing import List
 
 
-def parse(text: str) -> list:
+def parse(text: List[str]):
     """
     Takes a block of text and parses each line into message objects.
     Returns a list of message container objects.
@@ -24,7 +25,7 @@ def parse(text: str) -> list:
 
             msg_body = s[s.find(":", 15) + 2:]
 
-            # store decomposed info in a message container.
+            # store decomposed info in a tuple.
             msg = (msg_datetime, msg_speaker, msg_body)
 
             msgs.append(msg)
@@ -36,7 +37,7 @@ def parse(text: str) -> list:
         total += 1
 
     # import into database table
-    # db.insert_parsed(msgs)
+    db.insert_parsed(msgs)
     print(f"Total messages: {total}; missed: {missed}")
 
 
@@ -49,7 +50,7 @@ class Message:
 
 @dataclass
 class Conversation:
-    msgs: list[Message]
+    msgs: List[Message]
 
 
 def get_date(s : str):
