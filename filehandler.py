@@ -1,6 +1,7 @@
 import re
 from datetime import datetime, date, time
-from message import Message
+from dataclasses import dataclass
+# from message import Message
 
 
 def parse(text: str) -> list:
@@ -19,23 +20,36 @@ def parse(text: str) -> list:
             msg_time = get_time(metadata)       # --> dt.time object
             msg_datetime = datetime.combine(msg_date, msg_time)
 
-            msg_sender = metadata[metadata.find("-") + 2:]
+            msg_speaker = metadata[metadata.find("-") + 2:]
 
             msg_body = s[s.find(":", 15) + 2:]
 
-            # store decomposed string in a message container.
-            msg = Message(msg_datetime, msg_sender, msg_body)
-
-            # import into 'Message' table
+            # store decomposed info in a message container.
+            msg = (msg_datetime, msg_speaker, msg_body)
 
             msgs.append(msg)
+
         except:
             missed += 1
             # print(f"line no. {total}, raw line: {s}")
             pass
         total += 1
+
+    # import into database table
+    # db.insert_parsed(msgs)
     print(f"Total messages: {total}; missed: {missed}")
-    return msgs
+
+
+@dataclass(frozen=True)
+class Message:
+    msg_datetime: datetime
+    msg_speaker: str
+    msg_body: str
+
+
+@dataclass
+class Conversation:
+    msgs: list[Message]
 
 
 def get_date(s : str):
@@ -113,8 +127,6 @@ def get_time_match(s : str):
     match = re.search(reg, s)
     return match
 
-
-# THE CODE DUMPSTER
 
 
 

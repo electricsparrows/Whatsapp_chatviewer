@@ -84,13 +84,28 @@ def get_messages_from_date_to_date(date1: Date, date2: Date, msgs: list) -> list
     return res
 
 
+command = { }
+
 # Press the green button in the gutter to run the script.
 if __name__ == '__main__':
+
+    # load GUI (see import file screen)
     print("load a file")
-    rawtext = loadfile("test02.txt")
-    msgs = parse(rawtext)
+    file = loadfile("test02.txt")
+    msgs = parse(file)
+
+    # Connect Database -insert rows into the database.
+
     print("---------------------------------")
     print("Main menu:\n" +
+
           "- summary stats + calendar view\n" +
+
+          # views the main thread -- SELECTS
           "- view from beginning" +
+
+          # views the main thread -- SELECTS
           "- view by date")
+
+
+    # Close database connection?

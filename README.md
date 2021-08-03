@@ -21,6 +21,3 @@ chat log files, to browse and manage your messages more conveniently.
 
 ### Things to do:
 
-- [ ] db.py: connect and set up a database
-- [ ] try out eel to see how it works
-- [ ] identify API functions to write from wireframe mockups
