@@ -3,29 +3,13 @@ import sqlite3
 from typing import List
 
 
-def test_database_connection():
+def get_db():
     conn = sqlite3.connect("chatviewer.db")
-    with conn:
-        cur = conn.cursor()
-
-        # create tables
-        cur.execute('''CREATE TABLE IF NOT EXISTS Messages
-                        (msg_id INTEGER PRIMARY KEY AUTOINCREMENT, 
-                         file_id INTEGER, 
-                         datetime datetime, 
-                         speaker TEXT, 
-                         msg_content TEXT,
-                         msg_notes TEXT)''')
-        cur.execute('''CREATE TABLE IF NOT EXISTS Tag 
-                        (msg_id INTEGER PRIMARY KEY, tag_name TEXT)''')
-
-        cur.execute("INSERT INTO Tag VALUES(13, 'saved')")
-        cur.execute("SELECT * FROM Tag")
-        print(cur.fetchall())
+    return conn
 
 
-def insert_parsed(parsed_tuples: List[tuple]):
-    conn = sqlite3.connect("chatviewer.db")
+def insert_parsed(conn, parsed_tuples: List[tuple]):
+    # conn = sqlite3.connect("chatviewer.db")
     cur = conn.cursor()
 
     # create tables
@@ -45,13 +29,38 @@ def insert_parsed(parsed_tuples: List[tuple]):
     cur.executemany('''INSERT INTO Messages(date_time, speaker_name, msg_content) 
                         VALUES (?, ?, ?)''', parsed_tuples)
     # print(cur.fetchall())
-
     conn.commit()
 
 
-def read_message():
-    cur.execute("""SELECT FROM Messages""")
+def read_msg(conn, msg_id: str):
+    cur = conn.cursor
+    query = (msg_id,)
+    cur.execute('SELECT * FROM Messages where msg_id = ?', query)
+    return cur.fetchone()
+
+
+def get_msg_by_date(conn, date_str: str):
+    cur = conn.cursor
+    query = (date_str,)
+    cur.execute('SELECT * FROM Messages where date_time = ?', query)
+    return cur.fetchall()
+
+
+def get_first_message():
+    # SELECT MIN(date_time) FROM MESSAGES
     pass
+
+
+def get_last_message():
+    # SELECT MAX(date_time) FROM MESSAGES
+    pass
+
+
+def add_note(conn, msg_id: str, note: str):
+    cur = conn.cursor()
+    cur.execute("UPDATE Messages SET msg_notes = ? WHERE msg_id = ?", (note, msg_id))
+    conn.commit()
+
 
 # TODO test this
 def add_tag(msg_id: int, tag_name: str):
@@ -61,22 +70,20 @@ def add_tag(msg_id: int, tag_name: str):
     conn.commit()
 
 
-def save_message(msg_id: int):
-    add_tag(msg_id, "saved")
-
-
 # TODO test this
-def get_tag(msg_id: str):
+def get_tag(conn, msg_id: str):
     conn = sqlite3.connect("chatviewer.db")
     cur = conn.cursor()
     query = (msg_id,)
     cur.execute("SELECT tag_name FROM TAG WHERE msg_id = ?", query)
-    conn.commit()
+    return cur.fetchall()
 
 
-def remove_tag(msg_id: str):
+def remove_tag(msg_id: str, tag_name: str):
     conn = sqlite3.connect("chatviewer.db")
-    pass
+    cur = conn.cursor()
+    cur.execute("DELETE FROM Tag WHERE msg_id = ? AND tag_name = ?", (msg_id, tag_name))
+    conn.commit()
 
 
 # TODO refactor out the connection variable

@@ -37,13 +37,13 @@ def parse(text: List[str]):
         total += 1
 
     # import into database table
-    db.insert_parsed(msgs)
+    # db.insert_parsed(msgs)
     print(f"Total messages: {total}; missed: {missed}")
 
 
 @dataclass(frozen=True)
 class Message:
-    msg_datetime: datetime
+    msg_date: datetime
     msg_speaker: str
     msg_body: str
 
@@ -53,7 +53,7 @@ class Conversation:
     msgs: List[Message]
 
 
-def get_date(s : str):
+def get_date(s: str):
     """
     Takes a string and looks for any dates --> returns a datetime.date object
     Raises an exception if no date is found
@@ -96,7 +96,7 @@ def get_time(s: str):
         return None
 
 
-def get_date_match(s : str):
+def get_date_match(s: str):
     """
     Finds a date reference in given string by matching regex patterns
     Returns a two-tuple -- (string indicating date format ("dmy", "mdy"), match object)
@@ -117,7 +117,7 @@ def get_date_match(s : str):
     return (key, match)
 
 
-def get_time_match(s : str):
+def get_time_match(s: str):
     """
     Finds a time reference in given string using regex
     Returns a single match object - if no match, returns None
