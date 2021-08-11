@@ -2,6 +2,8 @@ import sqlite3
 
 from typing import List
 
+import message
+
 
 def get_db():
     try:
@@ -64,16 +66,26 @@ def get_last_message(conn):
 
 
 def yoy_activity(conn) -> dict:
-    pass
+    """
+    returns message count per absolute date
+    :param conn:
+    :return:
+    """
+    cur = conn.cursor()
+    cur.execute("""SELECT strftime('%Y-%m-%d', date_time) as valYear, COUNT(msg_id)
+                    FROM Messages
+                    GROUP BY valYear
+                    ORDER BY valYear""")
+    return cur.fetchall()
 
 
-def add_note(conn, msg_id: str, note: str):
+def add_note(conn, msg_id: int, note: str):
     cur = conn.cursor()
     cur.execute("UPDATE Messages SET msg_notes = ? WHERE msg_id = ?", (note, msg_id))
     conn.commit()
 
 
-def get_note(conn, msg_id: str):
+def get_note(conn, msg_id: int):
     cur = conn.cursor()
     cur.execute("SELECT msg_notes from Messages WHERE msg_id = ?", (msg_id,))
     conn.commit()
@@ -101,14 +113,19 @@ def get_tags(conn, msg_id: str):
 
 def remove_tag(conn, msg_id: str, tag_name: str):
     cur = conn.cursor()
+    tag_name = tag_name.strip()
     cur.execute("DELETE FROM Tag WHERE msg_id = ? AND tag_name = ?", (msg_id, tag_name))
     conn.commit()
 
 
-def retrieve_by_keyword(conn, keyword: str):
+def retrieve_by_keyword(conn, search_term: str):
+    cur = conn.cursor()
+    search_term = search_term.strip()
+
     pass
 
-# TODO test all in sql console and unit tests
 
+def message_wrapper(t: tuple) -> message.Message:
+    return message.Message(t[0], t[1], t[2], t[3], t[4], t[5])
 
 

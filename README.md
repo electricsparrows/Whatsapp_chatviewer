@@ -32,3 +32,9 @@ WhatsApp chat history files, to browse and manage your messages more convenientl
       - enter search keyword
 
 - [ ] using PugSQL may have been a good idea, they return results as dictionaries
+
+- [ ] connect database functions with the controller functions
+
+- [ ] implement `yoy_activity`
+
+- [ ] implement `retrieve by keyword`

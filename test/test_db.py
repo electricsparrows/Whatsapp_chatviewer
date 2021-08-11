@@ -81,4 +81,8 @@ def test_get_tags():
 
 
 def test_remove_tag():
-    assert False
+    conn = get_conn()
+    with conn:
+        remove_tag(conn, 1, 'Sample annotation')
+        result = get_tags(conn, 1)
+        print(result)
