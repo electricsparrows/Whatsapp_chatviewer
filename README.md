@@ -6,7 +6,7 @@ WhatsApp chat history files, to browse and manage your messages more convenientl
   
 
 - [ ] Allows you to look for a message on a given date,
-  so that you don't have to scroll through the whole log.
+  so that you don't have to scroll through the whole log. 
   
 - [ ] Allows you to tag a message to save for later
 
@@ -16,8 +16,9 @@ WhatsApp chat history files, to browse and manage your messages more convenientl
 
 - [ ] Keyword search
 
-Descoped:
-- Provides a noun summary of a set messages -- 
+### DESCOPED features:
+- [ ] reconcile duplicate messages on import
+- [ ] Provide a noun summary of a set messages -- 
   so that we can see topics discussed in a set of messages, without actually having to read their contents.
 
 
@@ -25,3 +26,9 @@ Descoped:
 ### Things to do:
 - [ ] need to update time parsing function to support seconds.
 
+- [ ] user input validation functions:
+      - enter file path
+      - enter date str
+      - enter search keyword
+
+- [ ] using PugSQL may have been a good idea, they return results as dictionaries

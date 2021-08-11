@@ -2,6 +2,7 @@ import time
 from filehandler import parse
 from dateutils import Date
 from typing import List
+import db
 
 
 def loadfile(path):
@@ -37,7 +38,7 @@ def get_messages_at_date(date_str: str, msgs: List):
     return [m for m in msgs if str(m.get_date()) == querystring]
 
 
-# these can be removed with f strings
+'''# these can be removed with f strings
 def __datemonth_formatter(n: int):
     """
     Takes date/month in int format --> returns its 2 digit string representation
@@ -64,6 +65,7 @@ def __year_formatter(n: int):
     if len(numstr) > 4:
         raise ValueError
     return numstr
+    '''
 
 
 def get_messages_from_date_to_date(date1: Date, date2: Date, msgs: list) -> list:
@@ -89,8 +91,11 @@ def get_messages_from_date_to_date(date1: Date, date2: Date, msgs: list) -> list
 
 # Controller
 
+
 def view_stats():
     print("viewing stats")
+    # retrieve first message in DB
+    # retrieve last message in DB
 
 
 
@@ -102,17 +107,23 @@ def view_calendar():
 
 def view_msg_at_date():
     query_date = str(input("Enter a date (YYYY-MM-DD): >>> "))
+    # query DB -> List[msg_tups]
     # get_messages_at_date(query_date)
+
+    # pass to GUI to render
 
 
 def view_from_beginning():
     # retrieve first message
+    # db.get_first_message(db.get_db())
     print("first message")
 
 
 def search_by_keyword():
     query = input("Please enter a keyword: >>> ")
     print("we found nothing :D")
+    # query DB
+    # render display
 
 
 def main_menu():
@@ -146,7 +157,6 @@ def main_menu():
                 elif next_command == "exit":
                     running = False
                     break
-
         except:
             if command == "exit":
                 running = False
@@ -158,6 +168,7 @@ def main_menu():
 if __name__ == '__main__':
 
     #print("load a file")
+
     #file = loadfile("test02.txt")
     #print(file)
     # msgs = parse(file)
