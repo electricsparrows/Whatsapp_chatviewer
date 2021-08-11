@@ -29,7 +29,7 @@ def test_read_msg():
     assert result == (2, 'f1', '2010-08-13 13:30', 'Grace', 'Hey! Whats up?', None)
 
 
-def test_get_msg_by_date():
+def test_get_msgs_at_date():
     assert True
 
 

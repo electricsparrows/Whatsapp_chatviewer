@@ -2,7 +2,7 @@ import time
 from filehandler import parse
 from dateutils import Date
 from typing import List
-import db
+from db import get_db, msg_wrapper, get_first_message, get_last_message, get_msgs_at_date, get_yoy_activity
 
 
 def loadfile(path):
@@ -20,23 +20,6 @@ def get_load_time():
     end = time.perf_counter()
     res = end - start
     print(f"performance: {res}s")
-
-
-# TODO
-def get_messages_at_date(date_str: str, msgs: List):
-    """
-    :param date: string representing a date in format YYYY-MM-DD
-    :param msgs: set of msg objects (list for now, connect to database later)
-    :return: list of tuples
-    """
-    # date will be input from a date selector.
-    yyyy = date_str[0:4]
-    mm = date_str[5:7]
-    dd = date_str[8:10]
-    querystring = f"{mm}/{dd}/{yyyy}"  # haha this is bad
-
-    return [m for m in msgs if str(m.get_date()) == querystring]
-
 
 '''# these can be removed with f strings
 def __datemonth_formatter(n: int):
@@ -69,21 +52,12 @@ def __year_formatter(n: int):
 
 
 def get_messages_from_date_to_date(date1: Date, date2: Date, msgs: list) -> list:
-    """
-    Returns a list of message objects dated between date1 and date2 (exclusive)
-    :param date1: start date range
-    :param date2: end date range (exclusive)
-    :param msgs: list of message objects
-    :return: filtered list of messages
-    """
     # just need to compute all dates between range date1, date2
-    # query db with SELECT * WHERE DATE == date_queries
-
     res = []
     current_date = date1
     while current_date < date2:
         try:
-            res += get_messages_at_date(str(current_date), msgs)
+            res += get_msgs_at_date(str(current_date), msgs)
             current_date.increment()
         except:
             print(f"date {current_date} not found")
@@ -94,43 +68,57 @@ def get_messages_from_date_to_date(date1: Date, date2: Date, msgs: list) -> list
 
 def view_stats():
     print("viewing stats")
+    conn = get_db()
     # retrieve first message in DB
+    first_msg = msg_wrapper(get_first_message(conn))
     # retrieve last message in DB
-
+    last_msg = msg_wrapper(get_last_message(conn))
 
 
 def view_calendar():
     print("activity calendar view")
-    # calculator yoy activity
+    conn = get_db()
+    lt = get_yoy_activity(conn)
     # return dict {year : List[(date, #. of msgs for that date)}
 
 
-def view_msg_at_date():
-    query_date = str(input("Enter a date (YYYY-MM-DD): >>> "))
+def view_msgs_at_date():
+    date_str = str(input("Enter a date (YYYY-MM-DD): >>> "))
+    # input validation (pass from 'view module'
     # query DB -> List[msg_tups]
-    # get_messages_at_date(query_date)
-
-    # pass to GUI to render
+    conn = get_db()
+    lt = get_msgs_at_date(conn, date_str)
+    for mtup in lt:
+        msg = msg_wrapper(mtup)
+        # pass to GUI to render
+    # print nav commands
 
 
 def view_from_beginning():
-    # retrieve first message
-    # db.get_first_message(db.get_db())
+    conn = get_db()
+    first_msg = msg_wrapper(get_first_message(conn))
     print("first message")
+    # render msg (in GUI)
+    # load commands:
+    # nav = {'a' : "prev day", 'd' : "next_day",
+    #         "m" : "main_menu"}
+    # print(nav)
+    # nav_cmd = str(input("Pls enter a command: >>> "))
 
 
 def search_by_keyword():
     query = input("Please enter a keyword: >>> ")
-    print("we found nothing :D")
+    # query string validation
     # query DB
-    # render display
+    # render results
+    print("we found nothing :D")
 
 
 def main_menu():
     nav_menu = {
         "s": view_stats,
         "c": view_calendar,
-        "d": view_msg_at_date,
+        "d": view_msgs_at_date,
         "f": view_from_beginning,
         "r": search_by_keyword
     }
@@ -167,11 +155,11 @@ def main_menu():
 # Press the green button in the gutter to run the script.
 if __name__ == '__main__':
 
-    #print("load a file")
+    # print("Load a file (Y/n):")
 
-    #file = loadfile("test02.txt")
-    #print(file)
+    # file = loadfile("test02.txt")
     # msgs = parse(file)
     # print("---------------------------------")
+
     # Main menu
     main_menu()

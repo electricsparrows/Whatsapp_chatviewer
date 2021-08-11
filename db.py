@@ -43,11 +43,22 @@ def read_msg(conn, msg_id: str):
     return cur.fetchone()
 
 
-def get_msg_by_date(conn, formatted_date: str):
+def get_msgs_at_date(conn, formatted_date: str):
     cur = conn.cursor()
     query = (formatted_date,)
     cur.execute('SELECT * FROM Messages where date_time = ?', query)
     return cur.fetchall()
+
+
+def get_msgs_from_date_range(conn, date1: str, date2: str):
+    """
+        Returns a list of message objects dated between date1 and date2 (exclusive)
+        :param date1: start date range
+        :param date2: end date range (exclusive)
+        :param msgs: list of message objects
+        :return: filtered list of messages
+    """
+    pass
 
 
 def get_first_message(conn):
@@ -65,7 +76,7 @@ def get_last_message(conn):
     return cur.fetchone()
 
 
-def yoy_activity(conn) -> dict:
+def get_yoy_activity(conn) -> dict:
     """
     returns message count per absolute date
     :param conn:
@@ -121,11 +132,10 @@ def remove_tag(conn, msg_id: str, tag_name: str):
 def retrieve_by_keyword(conn, search_term: str):
     cur = conn.cursor()
     search_term = search_term.strip()
-
     pass
 
 
-def message_wrapper(t: tuple) -> message.Message:
+def msg_wrapper(t: tuple) -> message.Message:
     return message.Message(t[0], t[1], t[2], t[3], t[4], t[5])
 
 
