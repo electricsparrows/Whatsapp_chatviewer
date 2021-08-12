@@ -30,7 +30,12 @@ def test_read_msg():
 
 
 def test_get_msgs_at_date():
-    assert True
+    conn = get_conn()
+    with conn:
+        result = get_msgs_at_date(conn, '2010-08-13')
+        print(result)
+        assert isinstance(result, List)
+        assert len(result) ==
 
 
 def test_get_first_message():

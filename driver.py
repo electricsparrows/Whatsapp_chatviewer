@@ -85,6 +85,7 @@ def view_calendar():
 def view_msgs_at_date():
     date_str = str(input("Enter a date (YYYY-MM-DD): >>> "))
     # input validation (pass from 'view module'
+    # format string:
     # query DB -> List[msg_tups]
     conn = get_db()
     lt = get_msgs_at_date(conn, date_str)

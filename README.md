@@ -35,6 +35,8 @@ WhatsApp chat history files, to browse and manage your messages more convenientl
 
 - [ ] connect database functions with the controller functions
 
-- [ ] implement `yoy_activity`
+- [x] implement `yoy_activity`
 
 - [ ] implement `retrieve by keyword`
+
+- [ ] fix the parsing of speaker_name issue

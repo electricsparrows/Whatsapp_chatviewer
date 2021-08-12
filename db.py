@@ -36,6 +36,14 @@ def insert_parsed(conn, parsed_tuples: List[tuple]):
     conn.commit()
 
 
+def describe(conn):
+    cur = conn.cursor()
+    cur.execute('SELECT COUNT(*) FROM Messages')
+    total_msgs = cur.fetchone()
+    cur.execute('SELECT COUNT(distinct(speaker_name)) FROM Messages')
+    num_speakers = cur.fetchone()
+
+
 def read_msg(conn, msg_id: str):
     cur = conn.cursor()
     query = (msg_id,)
@@ -46,7 +54,7 @@ def read_msg(conn, msg_id: str):
 def get_msgs_at_date(conn, formatted_date: str):
     cur = conn.cursor()
     query = (formatted_date,)
-    cur.execute('SELECT * FROM Messages where date_time = ?', query)
+    cur.execute("SELECT * FROM Messages where STRFTIME('%Y-%m-%d', date_time) = ?", query)
     return cur.fetchall()
 
 
