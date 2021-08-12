@@ -36,12 +36,23 @@ def insert_parsed(conn, parsed_tuples: List[tuple]):
     conn.commit()
 
 
-def describe(conn):
+def summary(conn):
+    """
+    Returns a dict with summary statistics giving a general picture of the
+    state of attached database
+    - total messages, no. of speakers, no. of files imported
+    :param conn: database connection obj
+    :return:
+    """
+    result = {}
     cur = conn.cursor()
     cur.execute('SELECT COUNT(*) FROM Messages')
-    total_msgs = cur.fetchone()
+    result['total_msgs'] = cur.fetchone()[0]
     cur.execute('SELECT COUNT(distinct(speaker_name)) FROM Messages')
-    num_speakers = cur.fetchone()
+    result['num_speakers'] = cur.fetchone()[0]
+    cur.execute('SELECT COUNT(distinct(file_id)) FROM Messages')
+    result['num_files'] = cur.fetchone()[0]
+    return result
 
 
 def read_msg(conn, msg_id: str):

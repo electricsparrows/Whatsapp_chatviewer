@@ -35,7 +35,15 @@ def test_get_msgs_at_date():
         result = get_msgs_at_date(conn, '2010-08-13')
         print(result)
         assert isinstance(result, List)
-        assert len(result) ==
+        assert len(result) == 3
+
+
+def test_summary():
+    conn = get_conn()
+    with conn:
+        result = summary(conn)
+        print(result)
+        print(result['total_msgs'])
 
 
 def test_get_first_message():
