@@ -1,9 +1,5 @@
-import sqlite3
-from sqlite3 import Connection
-
 import pytest
-
-import db
+from sqlite3 import Connection
 from db import *
 
 

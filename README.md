@@ -4,39 +4,50 @@
 - a management application which allows you to load in exported
 WhatsApp chat history files, to browse and manage your messages more conveniently.
   
-
-- [ ] Allows you to look for a message on a given date,
+- [x] Allows you to look for a message on a given date,
   so that you don't have to scroll through the whole log. 
   
-- [ ] Allows you to tag a message to save for later
+- [x] Allows you to tag a message to save for later
 
-- [ ] Allows you to add annotated comments to a message.
+- [x] Allows you to add annotated comments to a message.
 
 - [ ] Provides a visualization of chat activity over time.
 
-- [ ] Keyword search
+- [x] Keyword search
+
+- [x] reconcile duplicate messages on import
 
 ### DESCOPED features:
-- [ ] reconcile duplicate messages on import
+
 - [ ] Provide a noun summary of a set messages -- 
-  so that we can see topics discussed in a set of messages, without actually having to read their contents.
+  gives a brief overview of topics discussed in a set of messages, 
+  without actually having to read their contents.
 
 
 ------------------------------------------------
 ### Things to do:
 - [ ] need to update time parsing function to support seconds.
+- [ ] fix the parsing of speaker_name issue
+- [x] add the import_ref during parse()
+- [x] import ref --
+    - generate a unique session ref. no before parsing
+    - import all associated tuples with that code
+    
+- [ ] convo head indicator --
+        run post import? quite a lot of stuff to import, 
 
 - [ ] user input validation functions:
-      - enter file path
-      - enter date str
-      - enter search keyword
+      - [ ] enter file path
+      - [ ] enter date str
+      - [ ] enter search keyword
 
 - [ ] using PugSQL may have been a good idea, they return results as dictionaries
 
-- [ ] connect database functions with the controller functions
+- [x] connect database functions with the controller functions
 
 - [x] implement `yoy_activity`
 
-- [ ] implement `retrieve by keyword`
+- [x] implement `retrieve by keyword`
 
-- [ ] fix the parsing of speaker_name issue
+
+

@@ -1,8 +1,11 @@
+import random
 import sqlite3
 
 from typing import List
 
 import message
+
+# TODO -- flask tutorial actually has tips on how to write this
 
 
 def get_db():
@@ -10,37 +13,72 @@ def get_db():
         conn = sqlite3.connect("chatviewer.db")
         return conn
     except sqlite3.Error:
-        return "problem with connecting to database"
+        return None
 
 
 def insert_parsed(conn, parsed_tuples: List[tuple]):
+    """
+    Creates Tables and inserts parsed message content into 'Message' Table
+    :param conn:  database connection
+    :param parsed_tuples:  output from parser, each tuple contains message elements
+    :return:
+    """
     cur = conn.cursor()
 
     # create tables
     cur.execute('''CREATE TABLE IF NOT EXISTS Messages
-                    (msg_id INTEGER PRIMARY KEY AUTOINCREMENT, 
-                    file_id INTEGER,
-                    date_time datetime,
-                    speaker_name TEXT, 
-                    msg_content TEXT,
-                    msg_notes TEXT)''')
+                    (msg_id     INTEGER PRIMARY KEY AUTOINCREMENT, 
+                    conv_id     INTEGER,
+                    import_ref  INTEGER,
+                    date_time   datetime,
+                    speaker_name    TEXT, 
+                    msg_content     TEXT,
+                    msg_notes   TEXT)''')
+
     cur.execute('''CREATE TABLE IF NOT EXISTS Tag 
                     (msg_id INTEGER, 
                      tag_name TEXT unique,
                      PRIMARY KEY(msg_id, tag_name))''')
 
+    cur.execute('''CREATE TABLE IF NOT EXISTS Conversation
+                    (conv_id INTEGER PRIMARY KEY AUTOINCREMENT,
+                     participants TEXT NOT NULL,
+                     start_time datetime
+                     end_time datetime)''')
+
+    cur.execute('''CREATE TABLE IF NOT EXISTS TagList
+                    (tag_id INTEGER PRIMARY KEY AUTOINCREMENT,
+                     tag_name TEXT unique not null)''')
+
     # insert list of messages
-    cur.executemany('''INSERT INTO Messages(file_id, date_time, speaker_name, msg_content) 
+    cur.executemany('''INSERT INTO Messages(import_ref, date_time, speaker_name, msg_content) 
                         VALUES (?, ?, ?, ?)''', parsed_tuples)
     # print(cur.fetchall())
     conn.commit()
 
 
+def execute_query(conn, querystring):
+    cur = conn.cursor()
+    cur.execute(querystring).fetchall()
+
+
+def generate_import_ref(conn):
+    # fetch the last import ref
+    cur = conn.cursor()
+    last = cur.execute('SELECT max(import_ref) FROM MESSAGES').fetchone()
+    if last is not None:
+        return last[0] + 1
+    # increment
+    else:
+        # return a random number
+        return random.randint(10)
+
+
 def summary(conn):
     """
     Returns a dict with summary statistics giving a general picture of the
-    state of attached database
-    - total messages, no. of speakers, no. of files imported
+    state of the attached database
+    - total messages, no. of speakers, no. of conversation threads
     :param conn: database connection obj
     :return:
     """
@@ -50,12 +88,18 @@ def summary(conn):
     result['total_msgs'] = cur.fetchone()[0]
     cur.execute('SELECT COUNT(distinct(speaker_name)) FROM Messages')
     result['num_speakers'] = cur.fetchone()[0]
-    cur.execute('SELECT COUNT(distinct(file_id)) FROM Messages')
-    result['num_files'] = cur.fetchone()[0]
+    cur.execute('SELECT COUNT(distinct(convo_id)) FROM Messages')
+    result['num_convos'] = cur.fetchone()[0]
     return result
 
 
 def read_msg(conn, msg_id: str):
+    """
+    Retrieve message record by given msg_id
+    :param conn: database connection
+    :param msg_id: message id
+    :return:
+    """
     cur = conn.cursor()
     query = (msg_id,)
     cur.execute('SELECT * FROM Messages where msg_id = ?', query)
@@ -69,15 +113,29 @@ def get_msgs_at_date(conn, formatted_date: str):
     return cur.fetchall()
 
 
-def get_msgs_from_date_range(conn, date1: str, date2: str):
+def get_msgs_from_date_range(conn, start_date: str, end_date: str):
     """
         Returns a list of message objects dated between date1 and date2 (exclusive)
-        :param date1: start date range
-        :param date2: end date range (exclusive)
-        :param msgs: list of message objects
-        :return: filtered list of messages
+        :param start_date: start date range
+        :param end_date: end date range (exclusive)
+        :return: filtered list of messages tuples
     """
-    pass
+    # TODO
+    res = []
+    # check dates are valid: start_date < end_date
+    # get list of dates between range
+    conn = get_db()
+    # query the database in one go
+    # return results.
+    current_date = start_date
+    while current_date < end_date:
+        try:
+            # this will incur multiple scans
+            res += get_msgs_at_date(conn, str(current_date))
+            current_date.increment()
+        except:
+            print(f"date {current_date} not found")
+    return res
 
 
 def get_first_message(conn):
@@ -134,24 +192,25 @@ def add_tag(conn, msg_id: int, tag_name: str):
     conn.commit()
 
 
-def get_tags(conn, msg_id: str):
+def get_tags(conn, msg_id: int):
     cur = conn.cursor()
     query = (msg_id,)
     cur.execute("SELECT tag_name FROM TAG WHERE msg_id = ?", query)
     return cur.fetchall()
 
 
-def remove_tag(conn, msg_id: str, tag_name: str):
+def remove_tag(conn, msg_id: int, tag_name: str):
     cur = conn.cursor()
     tag_name = tag_name.strip()
     cur.execute("DELETE FROM Tag WHERE msg_id = ? AND tag_name = ?", (msg_id, tag_name))
     conn.commit()
 
 
-def retrieve_by_keyword(conn, search_term: str):
+def retrieve_by_keyword(conn, qstr: str):
     cur = conn.cursor()
-    search_term = search_term.strip()
-    pass
+    qstr = f'%{qstr.strip()}%'
+    cur.execute("SELECT * From Messages WHERE msg_content LIKE ? ESCAPE '\'", (qstr,))
+    return cur.fetchall
 
 
 def msg_wrapper(t: tuple) -> message.Message:

@@ -14,7 +14,7 @@ class Message:
     msg_notes: str
 
 
-    def get_metadata(self):
+    def get_info(self):
         return f"{self.get_date()} , {self.get_time().hour}:{self.get_time().min} -- {self.msg_speaker}"
 
     def get_date(self) -> datetime.date:

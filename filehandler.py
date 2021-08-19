@@ -5,40 +5,69 @@ import db
 from typing import List
 
 
-def parse(text: List[str]):
+def get_filepath():
+    """ should connect to the gui """
+    path = input("Please enter filepath: >>> ")
+    # TODO- add error handling for non-valid pathstring/ non-valid filetype
+    return path
+
+
+def loadfile(path: str):
+    with open(path, encoding="utf-8") as f:
+        # retrieve database connection
+        conn = db.get_db()
+        import_ref = db.generate_import_ref(conn)
+        success = 0
+        errs = []
+        for line in f:
+            try:
+                msg_tup = (import_ref, ) + parse(line)
+                # TODO - import into db
+                success += 1
+            except:
+                errs.append(line)
+
+        return success, errs
+
+
+def parse(line: str) -> tuple:
     """
-    Takes a block of text and parses each line into message objects.
-    Returns a list of message container objects.
+    Decomposes a message record into component objects - datetime, speaker name, msg content
+    Returns a tuple
     """
-    total = 0
-    missed = 0
-    msgs = []
-    for s in text:
-        try:
-            metadata = s[:s.find(":", 15)]
+    try:
+        metadata = line[:line.find(":", 15)]
 
-            msg_date = get_date(metadata)       # --> dt.date object
-            msg_time = get_time(metadata)       # --> dt.time object
-            msg_datetime = datetime.combine(msg_date, msg_time)
+        # parse the datetime stamp:
+        msg_date = get_date(metadata)       # --> dt.date object
+        msg_time = get_time(metadata)       # --> dt.time object
+        msg_datetime = datetime.combine(msg_date, msg_time)
 
-            msg_speaker = metadata[metadata.find("-") + 2:]
+        # speaker name
+        msg_speaker = metadata[metadata.find("-") + 2:]
 
-            msg_body = s[s.find(":", 15) + 2:]
+        # message contents
+        msg_body = line[line.find(":", 15) + 2:]
+        # assess whether it is likely to be a conversation head
 
-            # store decomposed info in a tuple.
-            msg = (msg_datetime, msg_speaker, msg_body)
+        # store decomposed info in a tuple.
+        msg = (msg_datetime, msg_speaker, msg_body)
 
-            msgs.append(msg)
+        return msg
+    except:
+        # skip incomplete tuples
+        print("error")
+        # print(f"line no. {total}, raw line: {s}")
 
-        except:
-            missed += 1
-            # print(f"line no. {total}, raw line: {s}")
-            pass
-        total += 1
 
-    # import into database table
-    # db.insert_parsed(msgs)
-    print(f"Total messages: {total}; missed: {missed}")
+
+def get_load_time(loadfunc, filepath):
+    """For performance testing"""
+    start = time.perf_counter()
+    loadfunc(filepath)
+    end = time.perf_counter()
+    res = end - start
+    print(f"performance: {res}s")
 
 
 @dataclass(frozen=True)
@@ -77,7 +106,7 @@ def get_date(s: str):
                 return dt
             except ValueError:
                 # tries again with next(it)
-                pass
+                continue
         except StopIteration:
             raise Exception("no date found")
 

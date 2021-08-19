@@ -2,9 +2,22 @@ import pytest
 from datetime import datetime, date, time
 from filehandler import *
 
-#TODO - unit testing for parser function
-def parser():
-    assert False
+#TODO - unit testing for parse function
+def test_parse1():
+    tup = parse("21/09/2016, 01:16 - Alice: Just joking\n")
+    assert isinstance(tup[0], datetime)
+    assert str(tup[0]) == "2016-09-21 01:16:00"
+    assert tup[1] == "Alice"
+    assert tup[2] == "Just joking"
+
+def test_parse2():
+    tup = parse('04/05/2016, 02:07 - You created group “Symptoms log”\n')
+    print(tup)
+    # raise exception - no name found
+
+def test_parse3():
+    tup = parse('20/09/2016, 18:49 - Messages you send to this group are now secured with end-to-end encryption. Tap for more info.')
+    # raise exception - no name found
 
 
 def test_get_date1():
@@ -25,6 +38,11 @@ def test_get_date4():
 
 def test_get_date5():
     assert get_date("aapples") is None
+
+
+def test_get_date6():
+    s = "[8/3/2021, 11:11:06 AM] You:"
+    assert get_date(s) == datetime(2021, 3, 8).date()
 
 
 def test_get_time_match1():
