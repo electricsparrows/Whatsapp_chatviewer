@@ -12,22 +12,29 @@ def get_filepath():
     return path
 
 
+def dummyloadfile(path):
+    with open(path, mode='r', encoding='utf-8') as f:
+        for i in range(20):
+            print(f.readline())
+
+
 def loadfile(path: str):
     with open(path, encoding="utf-8") as f:
         # retrieve database connection
         conn = db.get_db()
+        # generate a unique import reference
         import_ref = db.generate_import_ref(conn)
-        success = 0
+        msg_tups = []
         errs = []
         for line in f:
             try:
-                msg_tup = (import_ref, ) + parse(line)
-                # TODO - import into db
-                success += 1
+                tup = (import_ref, ) + parse(line)
+                msg_tups.append(tup)
             except:
                 errs.append(line)
 
-        return success, errs
+        db.insert_parsed(conn, msg_tups)
+        return f"success: {len(msg_tups)},\nmissed: {errs}"
 
 
 def parse(line: str) -> tuple:
@@ -57,7 +64,6 @@ def parse(line: str) -> tuple:
     except:
         # skip incomplete tuples
         print("error")
-        # print(f"line no. {total}, raw line: {s}")
 
 
 

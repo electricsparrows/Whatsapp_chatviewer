@@ -11,10 +11,16 @@ def get_conn():
 def test_insert_parsed():
     conn = get_conn()
     with conn:
-        data_tuples = [('f1', '2010-08-13 13:30', 'Bill', 'Hi.'),
-                      ('f1', '2010-08-13 13:30', 'Grace', 'Hey! Whats up?'),
-                      ('f1', '2010-08-13 13:40', 'Bill', 'Nothing much.')]
-        insert_parsed(conn, data_tuples)
+        data_tuples = [('4', '2010-08-13 13:30', 'Bill', 'Hi.'),
+                      ('4', '2010-08-13 13:30', 'Grace', 'Hey! Whats up?'),
+                      ('5', '2010-08-13 13:40', 'Bill', 'Nothing much.')]
+        insert_parsed(data_tuples, conn)
+
+
+def test_generate_import_ref():
+    r = generate_import_ref(get_conn())
+    assert isinstance(r, int)
+    assert r == 6
 
 
 def test_read_msg():
@@ -37,9 +43,10 @@ def test_get_msgs_at_date():
 def test_summary():
     conn = get_conn()
     with conn:
-        result = summary(conn)
-        print(result)
-        print(result['total_msgs'])
+        res = summary(conn)
+        assert res['total_msgs'] == 3
+        assert res['num_speakers'] == 2
+        assert res['num_convos'] == 1
 
 
 def test_get_first_message():

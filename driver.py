@@ -1,4 +1,7 @@
 import datetime
+
+import db
+from controller import view_stats
 from filehandler import parse, loadfile
 from dateutils import Date
 from db import get_db, msg_wrapper, get_first_message, get_last_message, get_msgs_at_date, get_yoy_activity
@@ -29,9 +32,9 @@ def validate_tagstring(str: str) -> str:
 # Press the green button in the gutter to run the script.
 if __name__ == '__main__':
 
-    # print("Load a file (Y/n):")
-
-    file = loadfile("test02.txt")
-    print(file)
-    # msgs = parse(file)
+    #input("Load a file (Y/n):>>> ")
+    #file = loadfile("test02.txt")
     # print("---------------------------------")
+    conn = db.get_db()
+    import_ref = db.generate_import_ref()
+    print(import_ref)

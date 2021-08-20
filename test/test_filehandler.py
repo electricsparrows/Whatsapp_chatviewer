@@ -67,7 +67,7 @@ def test_get_time1():
 
 def test_get_time2():
     assert get_time("29:83") is None
-    # Shoud this throw an error?
+    # Should this throw an error?
 
 
 def test_get_time3():

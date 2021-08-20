@@ -5,8 +5,6 @@ from typing import List
 
 import message
 
-# TODO -- flask tutorial actually has tips on how to write this
-
 
 def get_db():
     try:
@@ -16,7 +14,7 @@ def get_db():
         return None
 
 
-def insert_parsed(conn, parsed_tuples: List[tuple]):
+def insert_parsed(parsed_tuples: List[tuple], conn=get_db()):
     """
     Creates Tables and inserts parsed message content into 'Message' Table
     :param conn:  database connection
@@ -27,33 +25,32 @@ def insert_parsed(conn, parsed_tuples: List[tuple]):
 
     # create tables
     cur.execute('''CREATE TABLE IF NOT EXISTS Messages
-                    (msg_id     INTEGER PRIMARY KEY AUTOINCREMENT, 
-                    conv_id     INTEGER,
-                    import_ref  INTEGER,
-                    date_time   datetime,
+                    (msg_id         INTEGER PRIMARY KEY AUTOINCREMENT, 
+                    conv_id         INTEGER,
+                    import_ref      INTEGER,
+                    date_time       datetime,
                     speaker_name    TEXT, 
                     msg_content     TEXT,
-                    msg_notes   TEXT)''')
+                    msg_notes       TEXT)''')
 
     cur.execute('''CREATE TABLE IF NOT EXISTS Tag 
-                    (msg_id INTEGER, 
-                     tag_name TEXT unique,
+                    (msg_id         INTEGER, 
+                     tag_name       TEXT unique,
                      PRIMARY KEY(msg_id, tag_name))''')
 
     cur.execute('''CREATE TABLE IF NOT EXISTS Conversation
-                    (conv_id INTEGER PRIMARY KEY AUTOINCREMENT,
-                     participants TEXT NOT NULL,
-                     start_time datetime
-                     end_time datetime)''')
+                    (conv_id        INTEGER PRIMARY KEY AUTOINCREMENT,
+                     participants   TEXT NOT NULL,
+                     start_time     datetime
+                     end_time       datetime)''')
 
     cur.execute('''CREATE TABLE IF NOT EXISTS TagList
-                    (tag_id INTEGER PRIMARY KEY AUTOINCREMENT,
-                     tag_name TEXT unique not null)''')
+                    (tag_id         INTEGER PRIMARY KEY AUTOINCREMENT,
+                     tag_name       TEXT unique not null)''')
 
     # insert list of messages
     cur.executemany('''INSERT INTO Messages(import_ref, date_time, speaker_name, msg_content) 
                         VALUES (?, ?, ?, ?)''', parsed_tuples)
-    # print(cur.fetchall())
     conn.commit()
 
 
@@ -62,19 +59,18 @@ def execute_query(conn, querystring):
     cur.execute(querystring).fetchall()
 
 
-def generate_import_ref(conn):
+def generate_import_ref(conn=get_db()):
     # fetch the last import ref
-    cur = conn.cursor()
-    last = cur.execute('SELECT max(import_ref) FROM MESSAGES').fetchone()
-    if last is not None:
-        return last[0] + 1
-    # increment
-    else:
+    try:
+        cur = conn.cursor()
+        last = cur.execute('SELECT max(import_ref) FROM MESSAGES').fetchone()
+        return int(last[0]) + 1
+    except sqlite3.OperationalError:
         # return a random number
-        return random.randint(10)
+        return random.randint(0, 10)
 
 
-def summary(conn):
+def summary(conn= get_db()):
     """
     Returns a dict with summary statistics giving a general picture of the
     state of the attached database
@@ -88,7 +84,7 @@ def summary(conn):
     result['total_msgs'] = cur.fetchone()[0]
     cur.execute('SELECT COUNT(distinct(speaker_name)) FROM Messages')
     result['num_speakers'] = cur.fetchone()[0]
-    cur.execute('SELECT COUNT(distinct(convo_id)) FROM Messages')
+    cur.execute('SELECT COUNT(distinct(conv_id)) FROM Messages')
     result['num_convos'] = cur.fetchone()[0]
     return result
 
@@ -139,7 +135,7 @@ def get_msgs_from_date_range(conn, start_date: str, end_date: str):
 
 
 def get_first_message(conn):
-    cur = conn.cursor
+    cur = conn.cursor()
     cur.execute("""SELECT * FROM Messages
                 WHERE date_time = (SELECT MIN(date_time) from Messages)""")
     return cur.fetchone()
@@ -147,7 +143,7 @@ def get_first_message(conn):
 
 def get_last_message(conn):
     # might return two messages sometimes if timestamps clash -- not essential fix
-    cur = conn.cursor
+    cur = conn.cursor()
     cur.execute("""SELECT * FROM Messages
                     WHERE date_time = (SELECT MAX(date_time) from Messages)""")
     return cur.fetchone()
@@ -206,14 +202,28 @@ def remove_tag(conn, msg_id: int, tag_name: str):
     conn.commit()
 
 
-def retrieve_by_keyword(conn, qstr: str):
+def retrieve_by_keyword(conn, querystr: str):
     cur = conn.cursor()
-    qstr = f'%{qstr.strip()}%'
+    qstr = f'{querystr.strip()}'
     cur.execute("SELECT * From Messages WHERE msg_content LIKE ? ESCAPE '\'", (qstr,))
     return cur.fetchall
 
 
+# could turn this into a row factory like flask.
 def msg_wrapper(t: tuple) -> message.Message:
     return message.Message(t[0], t[1], t[2], t[3], t[4], t[5])
 
 
+# This script i nicked from flask documentation
+def query_db(query, args=(), one=False):
+    cur = get_db().cursor().execute(query, args)
+    rv = cur.fetchall()
+    cur.close()
+    if rv:
+        if one:
+            return msg_wrapper(rv[0])
+        else:
+            return [msg_wrapper(r) for r in rv]
+    else:
+        return None
+    # return (rv[0] if rv else None) if one else rv

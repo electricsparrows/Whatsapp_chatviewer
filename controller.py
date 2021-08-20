@@ -1,9 +1,11 @@
+import db
 from db import get_db, msg_wrapper, get_first_message, get_last_message, get_msgs_at_date, get_yoy_activity
 
 
 def view_stats():
-    print("viewing stats")
+    print("Viewing stats")
     conn = get_db()
+    db.summary()
     # retrieve first message in DB
     first_msg = msg_wrapper(get_first_message(conn))
     # retrieve last message in DB
