@@ -4,7 +4,7 @@ import nltk
 from nltk.corpus import stopwords
 #nltk.download()
 
-msg1 = "don't think u had hallucinations in hk cuz i witnessed ur situation and saw nothing except trembling and muscles atonia // yea, u had so many hallucinations in uk //what do u mean by \"when u saw Youtube ppl still moving\"?\""
+msg1 = "don't think u had hallucinations cuz i witnessed ur situation and saw nothing except trembling and muscles atonia"
 
 msg2 = "I don't think so. Don't think it's doable"
 
