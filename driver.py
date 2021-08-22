@@ -21,12 +21,14 @@ def validate_datestr(str : str) -> bool:
 
 def validate_tagstring(str: str) -> str:
     """
-    checks given string starts with '#' and returns str in uniform casing.
+    checks given string starts with '#' and returns tag_str in uniform casing.
     :param str:
     :return:
     """
     if str[0] == '#':
         return str.lower().strip()
+    else:
+        raise ValueError("Tag name must start with #")
 
 
 # Press the green button in the gutter to run the script.
@@ -36,5 +38,3 @@ if __name__ == '__main__':
     #file = loadfile("test02.txt")
     # print("---------------------------------")
     conn = db.get_db()
-    import_ref = db.generate_import_ref()
-    print(import_ref)

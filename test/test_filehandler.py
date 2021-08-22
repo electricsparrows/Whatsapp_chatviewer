@@ -2,22 +2,64 @@ import pytest
 from datetime import datetime, date, time
 from filehandler import *
 
-#TODO - unit testing for parse function
+
 def test_parse1():
-    tup = parse("21/09/2016, 01:16 - Alice: Just joking\n")
+    # normal pass case
+    tup = parse("21/09/2016, 01:16 - Alice: Just joking")
     assert isinstance(tup[0], datetime)
     assert str(tup[0]) == "2016-09-21 01:16:00"
     assert tup[1] == "Alice"
     assert tup[2] == "Just joking"
 
 def test_parse2():
-    tup = parse('04/05/2016, 02:07 - You created group “Symptoms log”\n')
-    print(tup)
-    # raise exception - no name found
+    # no speaker name found - raise exception
+    with pytest.raises(Exception):
+        tup = parse('04/05/2016, 02:07 - You created group “Symptoms log”')
+
 
 def test_parse3():
-    tup = parse('20/09/2016, 18:49 - Messages you send to this group are now secured with end-to-end encryption. Tap for more info.')
-    # raise exception - no name found
+    # no speaker name found - raise exception
+    with pytest.raises(Exception):
+        tup = parse('20/09/2016, 18:49 - Messages you send to this group...')
+
+def test_parse4():
+    # timestamp  v1
+    s = "11/20/15, 12:45 - Em: i send to ur email"
+    tup = parse(s)
+    assert isinstance(tup[0], datetime)
+    assert str(tup[0]) == "2015-11-20 12:45:00"
+    assert tup[1] == "Em"
+    assert tup[2] == "i send to ur email"
+
+
+def test_parse5():
+    # timestamp v2
+    s = "23/09/2016, 08:23 - NAKAHARA: Yah I dunno why"
+    tup = parse(s)
+    assert isinstance(tup[0], datetime)
+    assert str(tup[0]) == "2016-09-23 08:23:00"
+    assert tup[1] == "NAKAHARA"
+    assert tup[2] == "Yah I dunno why"
+
+
+def test_parse6():
+    # timestamp v3.1
+    s = "[12/3/2021, 3:29:04 PM] Christine M.: slept last night sitting up with head rested on edge of high table"
+    tup = parse(s)
+    assert isinstance(tup[0], datetime)
+    assert str(tup[0]) == "2021-03-12 15:29:04"
+    assert tup[1] == "Christine M."
+    assert tup[2] == "slept last night sitting up with head rested on edge of high table"
+
+
+def test_parse7():
+    # timestamp v3.2
+    s = "[8/3/2021, 11:11:06 AM] +7758 123456: Notes to self"
+    tup = parse(s)
+    assert isinstance(tup[0], datetime)
+    assert str(tup[0]) == "2021-03-12 11:11:06"
+    assert tup[1] == "+7758 123456"
+    assert tup[2] == "Notes to self"
 
 
 def test_get_date1():

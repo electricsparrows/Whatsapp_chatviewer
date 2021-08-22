@@ -1,4 +1,5 @@
-# This module processes message content only.
+# This module contains de-scoped functionality
+# processes message content only.
 
 import nltk
 from nltk.corpus import stopwords

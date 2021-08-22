@@ -1,4 +1,5 @@
 import re
+import sqlite3
 from datetime import datetime, date, time
 from dataclasses import dataclass
 import db
@@ -8,14 +9,8 @@ from typing import List
 def get_filepath():
     """ should connect to the gui """
     path = input("Please enter filepath: >>> ")
-    # TODO- add error handling for non-valid pathstring/ non-valid filetype
     return path
 
-
-def dummyloadfile(path):
-    with open(path, mode='r', encoding='utf-8') as f:
-        for i in range(20):
-            print(f.readline())
 
 
 def loadfile(path: str):
@@ -42,28 +37,24 @@ def parse(line: str) -> tuple:
     Decomposes a message record into component objects - datetime, speaker name, msg content
     Returns a tuple
     """
-    try:
-        metadata = line[:line.find(":", 15)]
+    metadata = line[:line.find(":", 20)]
 
-        # parse the datetime stamp:
-        msg_date = get_date(metadata)       # --> dt.date object
-        msg_time = get_time(metadata)       # --> dt.time object
-        msg_datetime = datetime.combine(msg_date, msg_time)
+    # parse the datetime stamp:
+    msg_date = get_date(metadata)       # --> dt.date object
+    msg_time = get_time(metadata)       # --> dt.time object
+    msg_datetime = datetime.combine(msg_date, msg_time)
 
-        # speaker name
-        msg_speaker = metadata[metadata.find("-") + 2:]
+    # speaker name
+    msg_speaker = metadata[metadata.find("-") + 2:]
 
-        # message contents
-        msg_body = line[line.find(":", 15) + 2:]
-        # assess whether it is likely to be a conversation head
+    # message contents
+    msg_body = line[line.find(":", 15) + 2:]
+    # assess whether it is likely to be a conversation head
 
-        # store decomposed info in a tuple.
-        msg = (msg_datetime, msg_speaker, msg_body)
+    # store decomposed info in a tuple.
+    msg = (msg_datetime, msg_speaker, msg_body)
 
-        return msg
-    except:
-        # skip incomplete tuples
-        print("error")
+    return msg
 
 
 

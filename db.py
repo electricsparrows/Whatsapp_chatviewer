@@ -3,7 +3,7 @@ import sqlite3
 
 from typing import List
 
-import message
+import message as msg
 
 
 def get_db():
@@ -54,11 +54,6 @@ def insert_parsed(parsed_tuples: List[tuple], conn=get_db()):
     conn.commit()
 
 
-def execute_query(conn, querystring):
-    cur = conn.cursor()
-    cur.execute(querystring).fetchall()
-
-
 def generate_import_ref(conn=get_db()):
     # fetch the last import ref
     try:
@@ -89,10 +84,10 @@ def summary(conn= get_db()):
     return result
 
 
-def read_msg(conn, msg_id: str):
+def read_msg(msg_id: int, conn = get_db()):
     """
-    Retrieve message record by given msg_id
-    :param conn: database connection
+    Retrieves message record by given msg_id
+    :param conn: database connection; connects to chatViewer.db by default
     :param msg_id: message id
     :return:
     """
@@ -102,56 +97,62 @@ def read_msg(conn, msg_id: str):
     return cur.fetchone()
 
 
-def get_msgs_at_date(conn, formatted_date: str):
+def get_msgs_at_date(formatted_date: str, conn= get_db()):
+    """
+    Retrieves message records associated with given date
+    :param conn: database connection; connects to chatViewer.db by default
+    :param formatted_date: date string given in ISO-8601 format (YYYY-MM-DD)
+    :return: list of message records
+    """
     cur = conn.cursor()
     query = (formatted_date,)
     cur.execute("SELECT * FROM Messages where STRFTIME('%Y-%m-%d', date_time) = ?", query)
-    return cur.fetchall()
+    return [msg_wrapper(tup) for tup in cur.fetchall()]
 
 
-def get_msgs_from_date_range(conn, start_date: str, end_date: str):
+def get_msgs_from_date_range(start_date: str, end_date: str, conn= get_db()):
     """
         Returns a list of message objects dated between date1 and date2 (exclusive)
         :param start_date: start date range
         :param end_date: end date range (exclusive)
         :return: filtered list of messages tuples
     """
-    # TODO
+    # De-scoped function
     res = []
     # check dates are valid: start_date < end_date
     # get list of dates between range
-    conn = get_db()
     # query the database in one go
     # return results.
-    current_date = start_date
-    while current_date < end_date:
-        try:
-            # this will incur multiple scans
-            res += get_msgs_at_date(conn, str(current_date))
-            current_date.increment()
-        except:
-            print(f"date {current_date} not found")
-    return res
 
 
 def get_first_message(conn):
+    """
+    Retrieves oldest message in the database
+    :param conn: database connection; connects to chatViewer.db by default
+    :return: 'message' data access object
+    """
     cur = conn.cursor()
     cur.execute("""SELECT * FROM Messages
                 WHERE date_time = (SELECT MIN(date_time) from Messages)""")
-    return cur.fetchone()
+    return msg_wrapper(cur.fetchone())
 
 
 def get_last_message(conn):
+    """
+    Retrieves newest message in the database
+    :param conn: database connection; connects to chatViewer.db by default
+    :return: 'message' data access object
+    """
     # might return two messages sometimes if timestamps clash -- not essential fix
     cur = conn.cursor()
     cur.execute("""SELECT * FROM Messages
                     WHERE date_time = (SELECT MAX(date_time) from Messages)""")
-    return cur.fetchone()
+    return msg_wrapper(cur.fetchone())
 
 
 def get_yoy_activity(conn) -> dict:
     """
-    returns message count per absolute date
+    returns message count per absolute date in each available year
     :param conn:
     :return:
     """
@@ -175,7 +176,12 @@ def get_note(conn, msg_id: int):
     conn.commit()
 
 
-def add_tag(conn, msg_id: int, tag_name: str):
+def remove_note(msg_id: int, conn=get_db()):
+    cur = conn.cursor()
+    cur.execute("UPDATE Messages SET msg_notes = NULL WHERE msg_id = ?", (msg_id,))
+    conn.commit()
+
+def add_tag(msg_id: int, tag_name: str, conn= get_db()):
     '''
     :param conn: connection to database
     :param msg_id: id of target message
@@ -188,30 +194,29 @@ def add_tag(conn, msg_id: int, tag_name: str):
     conn.commit()
 
 
-def get_tags(conn, msg_id: int):
+def get_tags(msg_id: int, conn= get_db()):
     cur = conn.cursor()
-    query = (msg_id,)
-    cur.execute("SELECT tag_name FROM TAG WHERE msg_id = ?", query)
+    cur.execute("SELECT tag_name FROM TAG WHERE msg_id = ?", (msg_id,))
     return cur.fetchall()
 
 
-def remove_tag(conn, msg_id: int, tag_name: str):
+def remove_tag(msg_id: int, tag_name: str, conn= get_db()):
     cur = conn.cursor()
     tag_name = tag_name.strip()
     cur.execute("DELETE FROM Tag WHERE msg_id = ? AND tag_name = ?", (msg_id, tag_name))
     conn.commit()
 
 
-def retrieve_by_keyword(conn, querystr: str):
+def keyword_search(querystr: str, conn= get_db()):
     cur = conn.cursor()
-    qstr = f'{querystr.strip()}'
+    qstr = querystr.strip()
     cur.execute("SELECT * From Messages WHERE msg_content LIKE ? ESCAPE '\'", (qstr,))
     return cur.fetchall
 
 
 # could turn this into a row factory like flask.
-def msg_wrapper(t: tuple) -> message.Message:
-    return message.Message(t[0], t[1], t[2], t[3], t[4], t[5])
+def msg_wrapper(t: tuple) -> msg.Message:
+    return msg.Message(t[0], t[1], t[2], t[3], t[4], t[5])
 
 
 # This script i nicked from flask documentation
@@ -227,3 +232,4 @@ def query_db(query, args=(), one=False):
     else:
         return None
     # return (rv[0] if rv else None) if one else rv
+

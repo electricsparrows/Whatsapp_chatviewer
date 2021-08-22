@@ -11,7 +11,7 @@ def view_stats():
     # retrieve last message in DB
     last_msg = msg_wrapper(get_last_message(conn))
     # print summmary stats
-    print (first_msg, last_msg)
+    print(first_msg, last_msg)
 
 
 def view_calendar():

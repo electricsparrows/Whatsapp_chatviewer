@@ -1,6 +1,6 @@
-# This module works with dates
 from datetime import datetime
 
+# This module works with dates
 
 def indexDates(msgs: list):  # this needs to be a singleton
     index = {}  # <String date, int index>
