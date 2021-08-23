@@ -1,9 +1,23 @@
 import re
-import sqlite3
-from datetime import datetime, date, time
-from dataclasses import dataclass
+import random as rdm
+from datetime import datetime as dt
 import db
 from typing import List
+import time
+
+
+# module constants
+RGX_PATTERNS = {
+        'pat1': r'\[\d+/\d+/[12]\d{3}, [12]?\d:[012345]\d:[012345]\d [AP]M\]',  # "[d/m/YYYY, HH:MM:SS [AP]M]"
+        'pat2': r'[0123]\d/[01]\d/[12]\d{3}, [012]\d:[012345]\d -',  # "dd/mm/YYYY, HH:MM -"
+        'pat3': r'\d+/\d+/\d\d, [012]\d:[012345]\d -'  # "m/d/yy, HH:MM -"
+    }
+
+DT_FORMATS = {
+    'pat1': "[%d/%m/%Y, %I:%M:%S %p]",
+    'pat2': "%d/%m/%Y, %I:%M",
+    'pat3': "%d/%m/%y, %I:%M",
+}
 
 
 def get_filepath():
@@ -12,50 +26,80 @@ def get_filepath():
     return path
 
 
-
 def loadfile(path: str):
-    with open(path, encoding="utf-8") as f:
-        # retrieve database connection
-        conn = db.get_db()
-        # generate a unique import reference
-        import_ref = db.generate_import_ref(conn)
-        msg_tups = []
-        errs = []
+    """
+    This is the key function
+    :param path:
+    :return:
+    """
+    # open file and get lines:
+    lines = open_file(path)
+
+    # retrieve database connection
+    conn = db.get_db()
+
+    # generate a unique import reference
+    import_ref = db.generate_import_ref(conn)
+
+    # parse msg data tokens from lines
+    msg_tuples, errs = parse(lines, import_ref)
+
+    # insert into db
+    db.insert_parsed(conn, msg_tuples)
+
+    return f"success: {len(msg_tuples)},\nmissed: {errs}"
+
+
+def open_file(path):
+    """Opens file at given path and reads each line --> Returns list of strings"""
+    with open(path, mode='r', encoding='utf-8') as f:
+        lines = []
         for line in f:
-            try:
-                tup = (import_ref, ) + parse(line)
-                msg_tups.append(tup)
-            except:
-                errs.append(line)
-
-        db.insert_parsed(conn, msg_tups)
-        return f"success: {len(msg_tups)},\nmissed: {errs}"
+            lines.append(line.strip())
+        return lines
 
 
-def parse(line: str) -> tuple:
+def parse(lines, import_ref):
     """
-    Decomposes a message record into component objects - datetime, speaker name, msg content
-    Returns a tuple
+        Parse operations by lines
+        :param lines: read lines in file
+        :param ts_ref: reference to timestamp pattern used by file - obtained from ts_sampling
+        :param import_ref: import reference
+        :return: list of message tuples
     """
-    metadata = line[:line.find(":", 20)]
+    ts_ref = get_ts_ref(lines)
+    rgx = RGX_PATTERNS[ts_ref]
+    fmt = DT_FORMATS[ts_ref]
+    msg_tuples = []
+    err = []
+    for ln in lines:
+        try:
+            msg = (import_ref,) + line_parse(ln, rgx, fmt)
+            msg_tuples.append(msg)
+        except (AttributeError, ValueError):
+            # line has no date/ unknown timestamp/ no name/ no content
+            err.append(ln)
+    return msg_tuples, err
 
-    # parse the datetime stamp:
-    msg_date = get_date(metadata)       # --> dt.date object
-    msg_time = get_time(metadata)       # --> dt.time object
-    msg_datetime = datetime.combine(msg_date, msg_time)
 
-    # speaker name
-    msg_speaker = metadata[metadata.find("-") + 2:]
+def line_parse(ln: str, rgx, fmt) -> tuple:
+    """
+    retrieves tokenized strings for datetime, name, message content
+    :param ln: line from file
+    :param rgx: regex pattern matching date-time string
+    :param fmt: date time format matching date-time string
+    :return: decomposed info in a tuple - (datetime: datetime, speaker name: str, msg_content: str)
+    """
+    datetime_str = re.match(ln, rgx).group()
+    k = len(datetime_str)
 
-    # message contents
-    msg_body = line[line.find(":", 15) + 2:]
-    # assess whether it is likely to be a conversation head
+    msg_dt = dt.strptime(datetime_str, fmt)
 
-    # store decomposed info in a tuple.
-    msg = (msg_datetime, msg_speaker, msg_body)
+    msg_name = get_name(ln, k)
 
-    return msg
+    msg_content = get_content_str(ln, k)
 
+    return (msg_dt, msg_name, msg_content)
 
 
 def get_load_time(loadfunc, filepath):
@@ -67,92 +111,73 @@ def get_load_time(loadfunc, filepath):
     print(f"performance: {res}s")
 
 
-@dataclass(frozen=True)
-class Message:
-    msg_date: datetime
-    msg_speaker: str
-    msg_body: str
-
-
-@dataclass
-class Conversation:
-    msgs: List[Message]
-
-
-def get_date(s: str):
+def get_name(ln, k):
     """
-    Takes a string and looks for any dates --> returns a datetime.date object
-    Raises an exception if no date is found
-    :param s: string with a date to be parsed.
-    :return: a datetime.date object (Y, M, D)
+    Tokenizes name of speaker associated with message in given line.
+    -  ValueError is raised if the metadata delimiter (:) cannot be found
+    :param ln: line from file containing data for a message record
+    :param k: length of the (datetime_str)
+    :return: string containing speaker name; ValueError
     """
-    (form, match) = get_date_match(s)
-
-    forms = {"dmy": ["%d/%m/%Y", "%d/%m/%y", "%d-%m-%Y", "%d-%m-%y"],
-             "mdy": ["%m/%d/%Y", "%m/%d/%y", "%m-%d-%Y", "%m-%d-%y"]}
-    try:
-        it = iter(forms.get(form))
-    except (AttributeError, TypeError):
-        # No matching date format found in s
-        return None
-
-    while True:
-        try:
-            try:
-                dt = datetime.strptime(match.group(), next(it)).date()
-                return dt
-            except ValueError:
-                # tries again with next(it)
-                continue
-        except StopIteration:
-            raise Exception("no date found")
+    if ln.find(':', k) == -1:
+        raise ValueError("cannot locate metadata substring, name may not exist")
+    else:
+        msg_name = ln[k: ln.find(':', k)].strip()
+        return msg_name.encode("ascii", "ignore").decode()
 
 
-def get_time(s: str):
+def get_content_str(ln:str, k:int):
     """
-    Finds a time reference in given string s. Returns None if no reference is found.
-    :param s: given string
-    :return:  datetime.time object
+    Parses message content data from given line
+    - ValueError is raised if the metadata delimiter (:) cannot be found
+    :param ln: line from file containing data for a message record
+    :param k: length of the (datetime_str)
+    :return: string containing message content; ValueError
     """
-    try:
-        match = get_time_match(s)
-        t = datetime.strptime(match.group(), "%H:%M").time()
-        return t
-    except (AttributeError, TypeError):
-        return None
+    if ln.find(':', k) == -1:
+        raise ValueError("cannot locate metadata substring, content may not exist")
+    else:
+        return ln[ln.find(':', k):].strip()
 
 
-def get_date_match(s: str):
-    """
-    Finds a date reference in given string by matching regex patterns
-    Returns a two-tuple -- (string indicating date format ("dmy", "mdy"), match object)
-    if there is no match, (None, None) is a returned.
-    :param s: string data
-    :return:  ("dmy" | "mdy", match object)
-    """
-    patterns = dict(dmy=r'\d{2}[-/]\d{2}[-/]\d{2}(\d\d)?', mdy=r'\d\d?[-/]\d\d?[-/]\d{2}(\d\d)?')
-    (key, match) = (None, None)
-
-    for reg in patterns.keys():
-        key = reg
-        match = re.search(patterns.get(key), s)
-        if match is not None:
-            break
-        else:
-            key = None
-    return (key, match)
+def get_ts_ref(lines):
+    # collect random sample, examine the timestamps
+    samp = sample_timestamps(lines)
+    # decide which timestamp pattern is correct.
+    return guess_pattern_from_sample(samp)
 
 
-def get_time_match(s: str):
-    """
-    Finds a time reference in given string using regex
-    Returns a single match object - if no match, returns None
-    :param s: string data
-    :return:  match object/ None
-    """
-    reg = r'([012]\d:[012345]\d)'
-    match = re.search(reg, s)
-    return match
+def sample_timestamps(lines):
+    """returns a random sample of timestamp strings from imported records"""
+    n = len(lines)
+    sample = [rdm.randint(0, len(lines)) for x in range(10)]
+    # get timestamps from those records.
+    ts = []
+    for i in range(n):
+        if i in sample:
+            ln = lines[i]
+            metadata = ln[:ln.find(":", 15)]
+            ts.append(metadata)
+    return ts
+
+
+def guess_pattern_from_sample(ts_sample: List[str]):
+    """returns best guess of ts pattern for given sample timestamps"""
+    patterns = RGX_PATTERNS
+    tal = {}
+    for s in ts_sample:
+        for pat_ref, rgx in patterns.items():
+            if re.match(rgx, s) is not None:
+                if pat_ref in tal.keys():
+                    tal[pat_ref] += 1
+                else:
+                    tal[pat_ref] = 1
+    # get highest freq:
+    mode = max(tal.values())
+    for k, v in tal.items():
+        if v == mode:
+            return k
+
 
 
 

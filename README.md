@@ -26,7 +26,7 @@ WhatsApp chat history files, to browse and manage your messages more convenientl
 
 ------------------------------------------------
 ### Things to do:
-- [ ] need to update time parsing function to support seconds.
+- [ ] need to update time parsing function to support various timestamps
 - [ ] fix the parsing of speaker_name issue
 - [x] add the import_ref during parse()
 - [x] import ref --
@@ -37,11 +37,9 @@ WhatsApp chat history files, to browse and manage your messages more convenientl
         run post import? quite a lot of stuff to import, 
 
 - [ ] user input validation functions:
-      - [ ] enter file path
+      - [ ] enter file path (restrict in gui component)
       - [ ] enter date str
       - [ ] enter search keyword
-
-- [ ] using PugSQL may have been a good idea, they return results as dictionaries
 
 - [x] connect database functions with the controller functions
 
