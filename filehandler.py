@@ -8,15 +8,15 @@ import time
 
 # module constants
 RGX_PATTERNS = {
-        'pat1': r'\[\d+/\d+/[12]\d{3}, [12]?\d:[012345]\d:[012345]\d [AP]M\]',  # "[d/m/YYYY, HH:MM:SS [AP]M]"
-        'pat2': r'[0123]\d/[01]\d/[12]\d{3}, [012]\d:[012345]\d -',  # "dd/mm/YYYY, HH:MM -"
-        'pat3': r'\d+/\d+/\d\d, [012]\d:[012345]\d -'  # "m/d/yy, HH:MM -"
+        'pat1': r"\[\d+/\d+/[12]\d{3}, [12]?\d:[012345]\d:[012345]\d [AP]M\]",  # "[d/m/YYYY, HH:MM:SS [AP]M]"
+        'pat2': r"[0123]\d/[01]\d/[12]\d{3}, [012]\d:[012345]\d -",  # "dd/mm/YYYY, HH:MM -"
+        'pat3': r"\d+/\d+/\d\d, [012]\d:[012345]\d -"  # "m/d/yy, HH:MM -"
     }
 
 DT_FORMATS = {
     'pat1': "[%d/%m/%Y, %I:%M:%S %p]",
-    'pat2': "%d/%m/%Y, %I:%M",
-    'pat3': "%d/%m/%y, %I:%M",
+    'pat2': "%d/%m/%Y, %H:%M -",
+    'pat3': "%m/%d/%y, %H:%M -",
 }
 
 
@@ -29,8 +29,8 @@ def get_filepath():
 def loadfile(path: str):
     """
     This is the key function
-    :param path:
-    :return:
+    :param path: path to file to be imported.
+    :return: no. of successful imports and no. of errors
     """
     # open file and get lines:
     lines = open_file(path)
@@ -90,7 +90,7 @@ def line_parse(ln: str, rgx, fmt) -> tuple:
     :param fmt: date time format matching date-time string
     :return: decomposed info in a tuple - (datetime: datetime, speaker name: str, msg_content: str)
     """
-    datetime_str = re.match(ln, rgx).group()
+    datetime_str = re.match(rgx, ln).group()
     k = len(datetime_str)
 
     msg_dt = dt.strptime(datetime_str, fmt)
@@ -137,7 +137,7 @@ def get_content_str(ln:str, k:int):
     if ln.find(':', k) == -1:
         raise ValueError("cannot locate metadata substring, content may not exist")
     else:
-        return ln[ln.find(':', k):].strip()
+        return ln[ln.find(':', k)+1:].strip()
 
 
 def get_ts_ref(lines):
