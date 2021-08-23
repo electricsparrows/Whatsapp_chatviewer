@@ -1,3 +1,4 @@
+import datetime
 import re
 import random as rdm
 from datetime import datetime as dt
@@ -99,7 +100,17 @@ def line_parse(ln: str, rgx, fmt) -> tuple:
 
     msg_content = get_content_str(ln, k)
 
+    #is_convo_head flag
+
     return (msg_dt, msg_name, msg_content)
+
+
+def is_convo_head(prev_ts: datetime.datetime, msg_content: str):
+    #examine content and guess if new convo.
+    # see if any greetings are in msg_content
+        #- compile a list of greeting words
+    # else: compare time delta from timestamp of prev message
+    return False
 
 
 def get_load_time(loadfunc, filepath):

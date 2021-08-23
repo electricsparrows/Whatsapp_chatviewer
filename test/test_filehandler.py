@@ -4,7 +4,6 @@ from filehandler import *
 from pathlib import Path
 
 
-
 def get_args(pat):
     return RGX_PATTERNS[pat], DT_FORMATS[pat]
 
@@ -140,11 +139,13 @@ def test_line_parse_exceptions(s):
         t = parse(s)
 
 # get_name tests
+# testcases = normal name, name with weird characters, phone number, no name
 
 # get_content_str tests
-
-# sample_timestamps
+# testcases = short message, long message, strange characters, hyperlinks
 
 # guess_pattern_from_sample
+# could make up some samples here
 
 # get_ts_ref
+# test on testfiles
