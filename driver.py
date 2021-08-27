@@ -1,40 +1,19 @@
-import datetime
-
+from datetime import datetime as dt
+from pathlib import Path
 import db
-from controller import view_stats
-from filehandler import parse, loadfile
-from dateutils import Date
-from db import get_db, msg_wrapper, get_first_message, get_last_message, get_msgs_at_date, get_yoy_activity
+import filehandler as fh
 
-# String handling functions
+# globals
+test_files_dir = "C:\\Users\\Cindy\\PycharmProjects\\ChatViewer-testfiles"
+p = Path(test_files_dir)
 
+in_file = p / "test01.txt"
+out_file = Path.cwd() / "out" / "output.xlsx"
 
-def validate_datestr(str : str) -> bool:
-    # is within universe of dates current to database atm
-    try:
-        # TODO check this-- check string is in ISO-8601 format
-        datetime.datetime.strptime(str, "%Y-%m-%d")
-        return True
-    except:
-        print("Please enter date in format YYYY-MM-DD")
-        return False
-
-def validate_tagstring(str: str) -> str:
-    """
-    checks given string starts with '#' and returns tag_str in uniform casing.
-    :param str:
-    :return:
-    """
-    if str[0] == '#':
-        return str.lower().strip()
-    else:
-        raise ValueError("Tag name must start with #")
 
 
 # Press the green button in the gutter to run the script.
 if __name__ == '__main__':
 
-    #input("Load a file (Y/n):>>> ")
-    #file = loadfile("test02.txt")
+    file = fh.loadfile(in_file)
     # print("---------------------------------")
-    conn = db.get_db()

@@ -6,13 +6,12 @@ import db
 from typing import List
 import time
 
-
 # module constants
 RGX_PATTERNS = {
-        'pat1': r"\[\d+/\d+/[12]\d{3}, [12]?\d:[012345]\d:[012345]\d [AP]M\]",  # "[d/m/YYYY, HH:MM:SS [AP]M]"
-        'pat2': r"[0123]\d/[01]\d/[12]\d{3}, [012]\d:[012345]\d -",  # "dd/mm/YYYY, HH:MM -"
-        'pat3': r"\d+/\d+/\d\d, [012]\d:[012345]\d -"  # "m/d/yy, HH:MM -"
-    }
+    'pat1': r"\[\d+/\d+/[12]\d{3}, [12]?\d:[012345]\d:[012345]\d [AP]M\]",  # "[d/m/YYYY, HH:MM:SS [AP]M]"
+    'pat2': r"[0123]\d/[01]\d/[12]\d{3}, [012]\d:[012345]\d -",  # "dd/mm/YYYY, HH:MM -"
+    'pat3': r"\d+/\d+/\d\d, [012]\d:[012345]\d -"  # "m/d/yy, HH:MM -"
+}
 
 DT_FORMATS = {
     'pat1': "[%d/%m/%Y, %I:%M:%S %p]",
@@ -24,6 +23,7 @@ DT_FORMATS = {
 def get_filepath():
     """ should connect to the gui """
     path = input("Please enter filepath: >>> ")
+    # press import to proceed with import
     return path
 
 
@@ -46,7 +46,7 @@ def loadfile(path: str):
     msg_tuples, errs = parse(lines, import_ref)
 
     # insert into db
-    db.insert_parsed(conn, msg_tuples)
+    db.insert_parsed(msg_tuples, conn)
 
     return f"success: {len(msg_tuples)},\nmissed: {errs}"
 
@@ -64,7 +64,6 @@ def parse(lines, import_ref):
     """
         Parse operations by lines
         :param lines: read lines in file
-        :param ts_ref: reference to timestamp pattern used by file - obtained from ts_sampling
         :param import_ref: import reference
         :return: list of message tuples
     """
@@ -100,15 +99,15 @@ def line_parse(ln: str, rgx, fmt) -> tuple:
 
     msg_content = get_content_str(ln, k)
 
-    #is_convo_head flag
+    # is_convo_head flag
 
-    return (msg_dt, msg_name, msg_content)
+    return msg_dt, msg_name, msg_content
 
 
 def is_convo_head(prev_ts: datetime.datetime, msg_content: str):
-    #examine content and guess if new convo.
+    # examine content and guess if new convo.
     # see if any greetings are in msg_content
-        #- compile a list of greeting words
+    # - compile a list of greeting words
     # else: compare time delta from timestamp of prev message
     return False
 
@@ -137,7 +136,7 @@ def get_name(ln, k):
         return msg_name.encode("ascii", "ignore").decode()
 
 
-def get_content_str(ln:str, k:int):
+def get_content_str(ln: str, k: int):
     """
     Parses message content data from given line
     - ValueError is raised if the metadata delimiter (:) cannot be found
@@ -148,7 +147,7 @@ def get_content_str(ln:str, k:int):
     if ln.find(':', k) == -1:
         raise ValueError("cannot locate metadata substring, content may not exist")
     else:
-        return ln[ln.find(':', k)+1:].strip()
+        return ln[ln.find(':', k) + 1:].strip()
 
 
 def get_ts_ref(lines):
@@ -161,7 +160,7 @@ def get_ts_ref(lines):
 def sample_timestamps(lines):
     """returns a random sample of timestamp strings from imported records"""
     n = len(lines)
-    sample = [rdm.randint(0, len(lines)) for x in range(10)]
+    sample = [rdm.randint(0, len(lines)) for i in range(10)]
     # get timestamps from those records.
     ts = []
     for i in range(n):
@@ -188,8 +187,3 @@ def guess_pattern_from_sample(ts_sample: List[str]):
     for k, v in tal.items():
         if v == mode:
             return k
-
-
-
-
-

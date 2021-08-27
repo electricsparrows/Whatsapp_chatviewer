@@ -1,5 +1,12 @@
+import pytest
+from controller import *
+
+def get_test_conn():
+    return
+
 def test_view_stats():
-    assert False
+    overview, first_msg, last_msg = view_stats()
+    print(overview, first_msg, last_msg)
 
 
 def test_view_calendar():

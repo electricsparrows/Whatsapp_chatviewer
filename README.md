@@ -26,26 +26,30 @@ WhatsApp chat history files, to browse and manage your messages more convenientl
 
 ------------------------------------------------
 ### Things to do:
-- [ ] need to update time parsing function to support various timestamps
-- [ ] fix the parsing of speaker_name issue
+- [x] connect database functions with the controller functions
+- [x] implement `yoy_activity`
+- [x] implement `retrieve by keyword`
+- [x] need to update time parsing function to support various timestamps
+- [x] fix the parsing of speaker_name issue
 - [x] add the import_ref during parse()
 - [x] import ref --
     - generate a unique session ref. no before parsing
     - import all associated tuples with that code
-    
-- [ ] convo head indicator --
-        run post import? quite a lot of stuff to import, 
 
+- [ ] complete unit tests in test_filehandler
+
+- [ ] build gui components
+
+- [x] test file import
+    - [ ] still has issues with reconciling duplicate records
+    - [ ] convo head indicator --
+        
 - [ ] user input validation functions:
       - [ ] enter file path (restrict in gui component)
       - [ ] enter date str
       - [ ] enter search keyword
 
-- [x] connect database functions with the controller functions
 
-- [x] implement `yoy_activity`
-
-- [x] implement `retrieve by keyword`
 
 
 

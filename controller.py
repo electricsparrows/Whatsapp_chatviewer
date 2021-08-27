@@ -1,37 +1,37 @@
 import db
-from db import get_db, msg_wrapper, get_first_message, get_last_message, get_msgs_at_date, get_yoy_activity
+from db import get_db, msg_wrapper, get_first_message, get_last_message, get_msgs_at_date, get_message_count_by_date, get_message_count_by_year
+
+"""fall back interface; also for testing"""
 
 
 def view_stats():
-    print("Viewing stats")
     conn = get_db()
-    db.summary()
+    ov = db.summary(conn)
     # retrieve first message in DB
-    first_msg = msg_wrapper(get_first_message(conn))
+    first = get_first_message(conn)
     # retrieve last message in DB
-    last_msg = msg_wrapper(get_last_message(conn))
-    # print summmary stats
-    print(first_msg, last_msg)
+    last = get_last_message(conn)
+    return ov, first, last
 
 
 def view_calendar():
     print("activity calendar view")
     conn = get_db()
-    lt = get_yoy_activity(conn)
+    # info to be rendered
+    count_year = get_message_count_by_year(conn)
+    count_day = get_message_count_by_date(conn)
+    return count_year, count_day
     # return dict {year : List[(date, #. of msgs for that date)}
 
 
 def view_msgs_at_date():
     date_str = str(input("Enter a date (YYYY-MM-DD): >>> "))
-    # input validation (pass from 'view module'
-    # format string:
+    # input validation -- done in gui.
     # query DB -> List[msg_tups]
     conn = get_db()
     lt = get_msgs_at_date(conn, date_str)
-    for mtup in lt:
-        msg = msg_wrapper(mtup)
-        # pass to GUI to render
-    # print nav commands
+    for rec in lt:
+        print(rec['msg_id'], rec['datetime'], rec[''])
 
 
 def select_msg(msg_id : str):
@@ -91,9 +91,10 @@ def nav_menu():
 
 
 def main_menu():
+    """fall back interface; also for testing"""
     nav_menu = {
         "s": view_stats,
-        "c": view_calendar,
+        "c": NotImplemented,
         "d": view_msgs_at_date,
         "f": view_from_beginning,
         "r": search_by_keyword
@@ -126,3 +127,4 @@ def main_menu():
                 running = False
             else:
                 print("no such command")
+

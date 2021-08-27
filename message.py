@@ -1,18 +1,17 @@
 from datetime import datetime
 from dataclasses import dataclass
-
 import db
 
 
 @dataclass
 class Message:
     msg_id: int
-    msg_fileref: int
+    msg_conv: int
+    msg_import_ref: int
     msg_datetime: datetime
     msg_speaker: str
     msg_body: str
     msg_notes: str
-
 
     def get_info(self):
         return f"{self.get_date()} , {self.get_time().hour}:{self.get_time().min} -- {self.msg_speaker}"
