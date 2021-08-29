@@ -213,6 +213,12 @@ def keyword_search(querystr: str, conn=get_db()):
     return cur.fetchall()
 
 
+def get_earliest_date(conn=get_db()) -> str:
+    cur = conn.cursor().execute("""SELECT strftime('%Y-%m-%d', 
+                                   (SELECT Min(date_time) from Messages)) AS min_date FROM Messages""")
+    return cur.fetchone()['min_date']
+
+
 # could turn this into a row factory like flask.
 def msg_wrapper(t: tuple):
     return msg.Message(t[0], t[1], t[2], t[3], t[4], t[5], t[6])
@@ -234,4 +240,4 @@ def query_db(query, args=(), one=False):
 
 
 if __name__ == "__main__":
-    print(get_first_message(), get_last_message())
+    print(get_earliest_date())
