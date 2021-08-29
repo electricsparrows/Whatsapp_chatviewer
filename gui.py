@@ -2,13 +2,6 @@ import PySimpleGUI as sg
 from datetime import datetime as dt
 import db
 
-'''
-layout = [[sg.Text('Primary Button: ')],
-          [sg.T(" ")],
-          [sg.Button('Hello World', size=(20, 4))],
-          [sg.Checkbox('check this', default= True, key="-IN-")]]
-'''
-
 
 def make_window():
     # style settings:
@@ -16,16 +9,6 @@ def make_window():
     med_btn = (10, 2)
     dummy_row = [None, None, None, None]
     default_date = (11, 1, 2015)
-    date = '-RESULTS_TABLE-'
-
-    """
-    import_file = [
-        [sg.T(" ")],
-        [sg.T("Choose a File:   "), sg.In(key="-PATH-"),
-         sg.FileBrowse(file_types=(("Text files", "*.txt"),))],
-        [sg.T(" ")], [sg.Submit("Submit", k="path-btn"), sg.Cancel()]
-    ]
-    """
 
     main_layout = [
         [sg.Text("Main Dashboard", font=("Helvetica 16 italic"))],
@@ -92,7 +75,7 @@ def make_window():
     return sg.Window('ChatViewer Demo', layout, finalize=True)
 
 
-# process data / eventhandlers
+# eventhandlers
 def dummy_readfile(path):
     """ test function to validate path"""
     with open(path, mode='r', encoding='utf-8') as f:

@@ -240,4 +240,4 @@ def query_db(query, args=(), one=False):
 
 
 if __name__ == "__main__":
-    print(get_msgs_at_date("2015-11-30"))
+    print(get_msgs_at_date("2016-01-06"))
