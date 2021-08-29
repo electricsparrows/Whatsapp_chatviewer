@@ -240,4 +240,4 @@ def query_db(query, args=(), one=False):
 
 
 if __name__ == "__main__":
-    print(get_earliest_date())
+    print(get_msgs_at_date("2015-11-30"))

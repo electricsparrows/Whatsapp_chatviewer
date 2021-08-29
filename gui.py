@@ -10,14 +10,11 @@ layout = [[sg.Text('Primary Button: ')],
 '''
 
 
-# define window contents
-
-
 def make_window():
     # style settings:
     sg.theme('Tan')
-    med_btn = (14, 2)
-    dummy_row = [None, None, None, None, None]
+    med_btn = (10, 2)
+    dummy_row = [None, None, None, None]
     default_date = (11, 1, 2015)
     date = '-RESULTS_TABLE-'
 
@@ -31,10 +28,8 @@ def make_window():
     """
 
     main_layout = [
-        #[sg.Input(key="-SEARCH2-"), sg.Submit("Search >", k="search-btn2")],
-        #[sg.Text("_" * 100)],
         [sg.Text("Main Dashboard", font=("Helvetica 16 italic"))],
-        [sg.B("Import File", k="import-btn"), sg.B("refresh", k="refresh-btn")],
+        [sg.B("Import File", k="import-btn"), sg.B("Refresh", k="refresh-btn")],
         [sg.Frame("At a Glance...", [
             [sg.T("Total message count: ", k="-TOTAL_MSG-")],
             [sg.T("Number of participants: ", k="-NUM_PPL-")],
@@ -52,8 +47,8 @@ def make_window():
                      [sg.T()],
                      [sg.Input(default_text="Search Chat Logs", key="-SEARCH-"),
                       sg.Submit("  Search Messages >  ", k="search-btn")],
-                     [sg.Table(values=[dummy_row], headings=["msg_id", "Time", "Name", "Content", "Notes"],
-                              visible_column_map=[False, True, True, True, True],
+                     [sg.Table(values=[dummy_row], headings=["Time", "Name", "Content", "Notes"],
+                              visible_column_map=[True, True, True, True],
                               expand_x=True,
                               background_color='black',
                               display_row_numbers=True,
@@ -62,8 +57,8 @@ def make_window():
                               key='-RESULTS_TABLE-', row_height=30)]
                     ]   # some results table
 
-    chat_area = sg.Col([[sg.Table(values=[dummy_row], headings=["msg_id", "Time", "Name", "Content", "Notes"],
-                                  visible_column_map=[False, True, True, True, False],
+    chat_area = sg.Col([[sg.Table(values=[dummy_row], headings=["Time", "Name", "Content", "Notes"],
+                                  visible_column_map=[True, True, True, False],
                                   # col_widths = [0, 2, 2, 100, 40],
                                   auto_size_columns=True,
                                   expand_x=True,
@@ -72,12 +67,13 @@ def make_window():
                                   background_color='#e5d7db',
                                   alternating_row_color='#e5d7db',
                                   enable_events=True,
+                                  metadata=None,
                                   key='-CHAT_TABLE-', row_height=30)]], expand_x=True)
 
     date_layout = [
         [sg.T('---, -- ---------- ----', font=("Helvetica 16 italic"), k="-DATEHEADER_OUT-"),
          sg.In(k="-DATE2-", visible=False, enable_events=True),  # hide this field
-         sg.CalendarButton("v", format=("%Y-%m-%d"), target="-DATE2-", default_date_m_d_y=default_date)],
+         sg.CalendarButton(" v ", format="%Y-%m-%d", target="-DATE2-", default_date_m_d_y=default_date, k='calbtn')],
         [sg.T('')],
         [sg.T("Available Conversations", font=("Helvetica 12 bold"))],
         [sg.Listbox(values=["--", "--"], k="-CONVOLIST-")],
@@ -124,23 +120,43 @@ def update_summary(window: sg.Window, conn= db.get_db()):
 
 
 def update_chat_table(date: str, window: sg.Window, conn= db.get_db()):
-    """Populates the CHAT-TABLE with records at given date from database"""
+    """Populates the CHAT-TABLE element with records at given date from database"""
     data = db.get_msgs_at_date(date, conn)
-    transformed_data = reformat_records(data)
+    transformed_data, ids = reformat_records(data)
     window['-CHAT_TABLE-'].update(values=transformed_data)
+    window['-CHAT_TABLE-'].metadata = ids
 
 
-def reformat_records(db_output):
+def reformat_records(db_output, search=False):
     """Transforms records from db_output (dictionaries) into lists, as required by PySimpleGUI's table element
     :param db_output: message records from db call in type dictionary
     """
     lt = []
+    ids = []
+    fmt = "%H:%M"
+    if search:
+        fmt = "%Y-%m-%d, %H:%M"
+
     for dict in db_output:
         time = dt.strptime(dict["date_time"], "%Y-%m-%d %H:%M:%S")  # error handling
-        time = time.strftime("%H:%M")
-        row = [dict['msg_id'], time, dict['speaker_name'], dict['msg_content'], dict['msg_notes']]
+        time = time.strftime(fmt)
+        row = [time, dict['speaker_name'], dict['msg_content'], dict['msg_notes']]
         lt.append(row)
-    return lt
+        ids.append(dict['msg_id'])
+    return lt, ids
+
+
+def update_results_table(search_str, window, conn):
+    """Populates the RESULTS-TABLE element with records at given date from database"""
+    data = db.keyword_search(search_str, conn)
+    data, ids = reformat_records(data, search=True)
+    window["-RESULTS_TABLE-"].update(values=data)
+    window["-RESULTS_TABLE-"].metadata = ids
+
+
+def datestr_to_tuple(datestr):
+    """"Converts a datestr in isoformat to three-tuple(m,d,y)"""
+    return (datestr[5:7], datestr[8:10], datestr[0:3])
 
 
 def render_message_rows(data):
@@ -195,13 +211,9 @@ def main():
         # search tab
         elif event == "search-btn":
             search_term = values["-SEARCH-"].strip()
-            print(search_term)
             # backend processes search
-            if values['-SEARCH-'].strip():
-                data = db.keyword_search(search_term, conn)
-                data = reformat_records(data)
-                window["-RESULTS_TABLE-"].update(values=data)
-                window.read()
+            if values['-SEARCH-'].strip() != "":
+                update_results_table(search_term, window, conn)
 
         # main dashboard - import file pop up
         elif event == "import-btn":
@@ -216,6 +228,7 @@ def main():
                     sg.popup("Import error - ")
         elif event == "refresh-btn":
             update_summary(window)
+            window['calbtn'].default_date_m_d_y = datestr_to_tuple(db.get_earliest_date(conn))
 
         # date-view eventhandlers
         elif event == '-DATE2-':
@@ -232,8 +245,9 @@ def main():
                     print("some error happened")
                     pass
         elif event == "-CHAT_TABLE-":
-            print(values['-CHAT_TABLE-'])
-
+            if window['-CHAT_TABLE-'].metadata is not None:
+                msg_id = window['-CHAT_TABLE-'].metadata[values['-CHAT_TABLE-'][0]]
+                print(msg_id)
         elif event == "-TOGGLE_NOTES-":
             print("working")
             # popup window to display notes
