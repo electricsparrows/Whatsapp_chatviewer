@@ -77,17 +77,16 @@ def summary(conn=get_db()):
     state of the attached database
     - total messages, no. of speakers, no. of conversation threads
     :param conn: database connection obj
-    :return:
+    :return: dictionary where k: summary statistic name, v: value of statistic
     """
-    result = {}
     cur = conn.cursor()
-    cur.execute('SELECT COUNT(*) FROM Messages')
-    result['total_msgs'] = cur.fetchone()[0]
-    cur.execute('SELECT COUNT(distinct(speaker_name)) FROM Messages')
-    result['num_speakers'] = cur.fetchone()[0]
-    # cur.execute('SELECT COUNT(distinct(conv_id)) FROM Messages')
-    # result['num_convos'] = cur.fetchone()[0]
-    return result
+    cur.execute('SELECT COUNT(*) as total_msgs FROM Messages')
+    total_m = cur.fetchone()
+    cur.execute('SELECT COUNT(distinct(speaker_name)) as num_speakers FROM Messages')
+    num_speakers = cur.fetchone()
+    # cur.execute('SELECT COUNT(distinct(conv_id)) as conversation_count FROM Messages')
+    # num_convos = cur.fetchone()
+    return {**total_m, **num_speakers}
 
 
 def read_msg(msg_id: int, conn=get_db()):
@@ -130,7 +129,7 @@ def get_last_message(conn=get_db()):
     :param conn: database connection; connects to chatViewer.db by default
     :return: 'message' data access object
     """
-    # might return two messages sometimes if timestamps clash -- not essential fix
+    # issue: might return two messages sometimes if timestamps clash -- not essential fix
     cur = conn.cursor()
     cur.execute("""SELECT * FROM Messages
                     WHERE date_time = (SELECT MAX(date_time) from Messages)""")
@@ -209,9 +208,9 @@ def remove_tag(msg_id: int, tag_name: str, conn=get_db()):
 
 def keyword_search(querystr: str, conn=get_db()):
     cur = conn.cursor()
-    qstr = querystr.strip()
-    cur.execute("SELECT * From Messages WHERE msg_content LIKE ? ESCAPE '\'", (qstr,))
-    return cur.fetchall
+    qstr = f'%{querystr.strip()}%'
+    cur.execute("SELECT * From Messages WHERE msg_content LIKE ? ESCAPE ? ", (qstr, "\\"))
+    return cur.fetchall()
 
 
 # could turn this into a row factory like flask.
@@ -235,7 +234,4 @@ def query_db(query, args=(), one=False):
 
 
 if __name__ == "__main__":
-    foo = get_message_count_by_date()
-    bar = get_message_count_by_year()
-    print(foo)
-    print(bar)
+    print(get_first_message(), get_last_message())
