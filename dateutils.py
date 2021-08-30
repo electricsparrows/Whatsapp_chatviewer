@@ -2,17 +2,6 @@ from datetime import datetime
 
 # This module works with dates
 
-def indexDates(msgs: list):  # this needs to be a singleton
-    index = {}  # <String date, int index>
-    current_date = ""
-    for i in range(len(msgs)):
-        if msgs[i] != current_date:
-            current_date = msgs[i][0]
-            if current_date not in index:
-                index[current_date] = i
-    return index
-
-
 class Date:
     def __init__(self, dt: datetime):
         self.__date = dt  # this is some datetime object

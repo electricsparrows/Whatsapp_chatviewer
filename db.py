@@ -1,7 +1,7 @@
 import random
 import sqlite3
 from typing import List
-import message as msg
+
 
 # from sqlite documentation
 def dict_factory(cursor, row):
@@ -30,28 +30,30 @@ def insert_parsed(parsed_tuples: List[tuple], conn=get_db()):
     cur = conn.cursor()
 
     # create tables
-    cur.execute('''CREATE TABLE IF NOT EXISTS Messages
-                    (msg_id         INTEGER PRIMARY KEY AUTOINCREMENT, 
+    cur.execute('''CREATE TABLE IF NOT EXISTS Messages(
+                    msg_id          INTEGER PRIMARY KEY AUTOINCREMENT, 
                     conv_id         INTEGER,
                     import_ref      INTEGER,
                     date_time       datetime,
                     speaker_name    TEXT, 
                     msg_content     TEXT,
-                    msg_notes       TEXT)''')
+                    msg_notes       TEXT,
+                    UNIQUE(date_time, speaker_name, msg_content)
+                    )''')
 
     cur.execute('''CREATE TABLE IF NOT EXISTS Tag 
                     (msg_id         INTEGER, 
-                     tag_name       TEXT unique,
+                     tag_name       TEXT,
                      PRIMARY KEY(msg_id, tag_name))''')
 
     cur.execute('''CREATE TABLE IF NOT EXISTS Conversation
-                    (conv_id        INTEGER PRIMARY KEY AUTOINCREMENT,
+                    (conv_id        INTEGER PRIMARY KEY,
                      participants   TEXT NOT NULL,
                      start_time     datetime
                      end_time       datetime)''')
 
     cur.execute('''CREATE TABLE IF NOT EXISTS TagList
-                    (tag_id         INTEGER PRIMARY KEY AUTOINCREMENT,
+                    (tag_id         INTEGER PRIMARY KEY,
                      tag_name       TEXT unique not null)''')
 
     # insert list of messages
@@ -146,7 +148,12 @@ def get_message_count_by_date(conn=get_db()) -> dict:
                                     FROM Messages
                                     GROUP BY valDate
                                     ORDER BY valDate""")
-    return cur.fetchall()
+    # tidy the return data format into a single dictionary
+    rv = cur.fetchall()
+    res = {}
+    for r in rv:
+        res[r['valDate']] = r['msg_count']
+    return res
 
 
 def get_message_count_by_year(conn=get_db()) -> dict:
@@ -156,9 +163,9 @@ def get_message_count_by_year(conn=get_db()) -> dict:
         :return: dictionary with key-value pairs representing (year, msg_count)
     """
     cur = conn.cursor().execute("""SELECT strftime('%Y', date_time) as valYear, COUNT(msg_id) as msg_count
-                        FROM Messages
-                        GROUP BY valYear
-                        ORDER BY valYear""")
+                                    FROM Messages
+                                    GROUP BY valYear
+                                    ORDER BY valYear""")
     return cur.fetchall()
 
 
@@ -219,25 +226,13 @@ def get_earliest_date(conn=get_db()) -> str:
     return cur.fetchone()['min_date']
 
 
-# could turn this into a row factory like flask.
-def msg_wrapper(t: tuple):
-    return msg.Message(t[0], t[1], t[2], t[3], t[4], t[5], t[6])
-
-
-# This script i nicked from flask documentation
+# This script i nicked from the flask documentation
 def query_db(query, args=(), one=False):
     cur = get_db().cursor().execute(query, args)
     rv = cur.fetchall()
     cur.close()
-    if rv:
-        if one:
-            return msg_wrapper(rv[0])
-        else:
-            return [msg_wrapper(r) for r in rv]
-    else:
-        return None
-    # return (rv[0] if rv else None) if one else rv
+    return (rv[0] if rv else None) if one else rv
 
 
 if __name__ == "__main__":
-    print(get_msgs_at_date("2016-01-06"))
+    print(get_message_count_by_date())

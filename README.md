@@ -38,11 +38,17 @@ WhatsApp chat history files, to browse and manage your messages more convenientl
 
 - [ ] complete unit tests in test_filehandler
 
-- [ ] build gui components
+- [x] build gui components
+    - [ ] display notes component
+      [ ] edit/ add msg note component
+    - [ ] add tag component
+    - [ ] view tags component
+    - [ ] implement conversation list
+    
 
 - [x] test file import
     - [ ] still has issues with reconciling duplicate records
-    - [ ] convo head indicator --
+    - [x] convo head indicator -- algorithm done
         
 - [ ] user input validation functions:
       - [ ] enter file path (restrict in gui component)

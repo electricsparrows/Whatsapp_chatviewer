@@ -1,5 +1,7 @@
+import datetime
+
 import PySimpleGUI as sg
-from datetime import datetime as dt
+from datetime import datetime as dt, date, timedelta
 import db
 
 
@@ -165,15 +167,14 @@ def goto_date(date, window):
     :param date: date string
     :return:
     """
-    event, values = window.read()
     if date is not None:
         try:
             # reformat date for header display
-            date_heading = dt.strftime(dt.strptime(values['-DATE2-'], "%Y-%m-%d"), "%A, %d %B %Y")
+            date_heading = dt.strftime(datetime.date.fromisoformat(date), "%A, %d %B %Y")
             window['-DATEHEADER_OUT-'].update(date_heading)
             # fetch convo list
             # fetch messages
-            update_chat_table(values['-DATE2-'], window)
+            update_chat_table(date, window)
         except ValueError:
             print("some error happened")
             pass
@@ -219,11 +220,10 @@ def main():
                 try:
                     # reformat date for header
                     current_date = values['-DATE2-']
-                    date_heading = dt.strftime(dt.strptime(current_date, "%Y-%m-%d"), "%A, %d %B %Y")
-                    window['-DATEHEADER_OUT-'].update(date_heading)
-                    # fetch convo list
-                    # fetch messages
-                    update_chat_table(current_date, window)
+                    goto_date(current_date, window)
+                    #date_heading = dt.strftime(dt.fromisoformat(current_date), "%A, %d %B %Y")
+                    #window['-DATEHEADER_OUT-'].update(date_heading)
+                    #update_chat_table(current_date, window)
                 except ValueError:
                     print("some error happened")
                     pass
@@ -236,14 +236,17 @@ def main():
             # popup window to display notes
             # window.read()
         elif event == "next-day-btn":
-            print("next day")
             # fetch date of next day
-            # go to next day
+            next_day = date.fromisoformat(current_date) + timedelta(days=1)     # next_day is a datetime.date obj
+            current_date = next_day.isoformat()
+            goto_date(current_date, window)
         elif event == "prev-day-btn":
-            print("prev day")
             # fetch date of prev day
-            # go to next day
+            prev_day = date.fromisoformat(current_date) - timedelta(days=1)  # prev_day is a datetime.date obj
+            current_date = prev_day.isoformat()
+            goto_date(current_date, window)
     window.close()
+
 
 if __name__ == "__main__":
     main()
