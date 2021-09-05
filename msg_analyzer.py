@@ -3,6 +3,9 @@
 
 import nltk
 from nltk.corpus import stopwords
+import numpy as np
+import pandas as pd
+import seaborn as sbn
 
 # nltk.download()
 
@@ -25,6 +28,11 @@ def get_nouns(tagged_list):
 
 
 print(get_nouns(tagged))
+
+
+# set of functions which take a list of message records --> returns some sort of visualization
+# - noun set cloud
+# - activity over time of day (probably takes date as an input)
 
 
 # tokenizer: string --> list of tokens

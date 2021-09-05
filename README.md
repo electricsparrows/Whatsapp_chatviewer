@@ -44,16 +44,16 @@ WhatsApp chat history files, to browse and manage your messages more convenientl
     - [ ] add tag component
     - [ ] view tags component
     - [ ] implement conversation list
+    - [ ] activity heatmap/ chart
     
-
 - [x] test file import
-    - [ ] still has issues with reconciling duplicate records
+    - [x] still has issues with reconciling duplicate records
     - [x] convo head indicator -- algorithm done
         
-- [ ] user input validation functions:
-      - [ ] enter file path (restrict in gui component)
-      - [ ] enter date str
-      - [ ] enter search keyword
+- [x] user input validation functions:
+      - [x] enter file path (restrict in gui component)
+      - [x] enter date str (use isoformat everywhere)
+      - [x] enter search keyword
 
 
 

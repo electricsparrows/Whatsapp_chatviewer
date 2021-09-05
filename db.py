@@ -113,6 +113,20 @@ def get_msgs_at_date(formatted_date: str, conn=get_db()) -> List:
     return cur.fetchall()
 
 
+def get_conversation_msgs(formatted_date: str, ptr, conn=get_db()):
+    """
+    :param formatted_date:
+    :param ptr: ptr is a msg_id reference which points to conversation head message record.
+    :param conn:
+    :return:
+    """
+    head = read_msg(ptr, conn)
+    data = get_msgs_at_date(formatted_date, conn)
+    # filter by import reference
+    data = filter(lambda m: m['import_ref'] == head['import_ref'], data)
+    # filter by time
+
+
 def get_first_message(conn=get_db()):
     """
     Retrieves oldest message in the database

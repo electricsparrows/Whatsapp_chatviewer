@@ -1,8 +1,7 @@
-import datetime
-
 import PySimpleGUI as sg
 from datetime import datetime as dt, date, timedelta
 import db
+from controller import update_results_table, update_summary, datestr_to_tuple, goto_date
 
 
 def make_window():
@@ -12,6 +11,8 @@ def make_window():
     dummy_row = [None, None, None, None]
     default_date = (11, 1, 2015)
 
+
+    # layouts
     main_layout = [
         [sg.Text("Main Dashboard", font=("Helvetica 16 italic"))],
         [sg.B("Import File", k="import-btn"), sg.B("Refresh", k="refresh-btn")],
@@ -32,6 +33,7 @@ def make_window():
                      [sg.T()],
                      [sg.Input(default_text="Search Chat Logs", key="-SEARCH-"),
                       sg.Submit("  Search Messages >  ", k="search-btn")],
+                     [sg.Check("Search Message Content"), sg.Check("Search Notes")],
                      [sg.Table(values=[dummy_row], headings=["Time", "Name", "Content", "Notes"],
                               visible_column_map=[True, True, True, True],
                               expand_x=True,
@@ -55,16 +57,18 @@ def make_window():
                                   metadata=None,
                                   key='-CHAT_TABLE-', row_height=30)]], expand_x=True)
 
+    notes_area = sg.Col([[sg.Input("notes", size=(30, 50)), sg.B("commit")]])
+
     date_layout = [
-        [sg.T('---, -- ---------- ----', font=("Helvetica 16 italic"), k="-DATEHEADER_OUT-"),
+        [sg.B(" < ", k="prev-day-btn"), sg.T('---, -- ---------- ----', font=("Helvetica 16 italic"), k="-DATEHEADER_OUT-"),
          sg.In(k="-DATE2-", visible=False, enable_events=True),  # hide this field
-         sg.CalendarButton(" v ", format="%Y-%m-%d", target="-DATE2-", default_date_m_d_y=default_date, k='calbtn')],
+         sg.CalendarButton(" v ", format="%Y-%m-%d", target="-DATE2-", default_date_m_d_y=default_date, k='calbtn'),
+         sg.T(" "), sg.B(" > ", k="next-day-btn")],
         [sg.T('')],
         [sg.T("Available Conversations", font=("Helvetica 12 bold"))],
-        [sg.Listbox(values=["--", "--"], k="-CONVOLIST-")],
+        [sg.Listbox(values=["--", "--"], k="-CONVOLIST-"), sg.B("update")],
         [sg.B("Show msg notes", k="-TOGGLE_NOTES-", enable_events=True)],
-        [chat_area],
-        [sg.B(" < ", k="prev-day-btn", size=med_btn), sg.T(" "*120), sg.B(" > ", k="next-day-btn", size= med_btn)]
+        [chat_area]
     ]
 
     layout = [[sg.Text('ChatViewer Application (demo)--', size=(38, 1), justification='left', font=("Helvetica 16 bold"),
@@ -77,107 +81,14 @@ def make_window():
     return sg.Window('ChatViewer Demo', layout, finalize=True)
 
 
-# eventhandlers
-def dummy_readfile(path):
-    """ test function to validate path"""
-    with open(path, mode='r', encoding='utf-8') as f:
-        foo = f.readlines(5)
-        print(foo)
+def make_notes_window():
+    layout = [[sg.T("From (name)", k='-nw_MSGNAME-'), sg.T("at 00:00: ", k="-nw_MSGTIME-")],
+              [sg.T("Fetched msg content here", k="-nw_MSGCONTENT-"),
+              [sg.T("")],
+              [sg.Multiline("Notes here:", size=(30, 10), k="-nw_NOTEBOX-")],
+               sg.B("Save", k="nw_commit-note-btn")]]
 
-
-def update_summary(window: sg.Window, conn= db.get_db()):
-    """updates the "At a glance" variables"""
-    data = db.summary(conn)
-    # fetch data from database
-    tmc = data['total_msgs']
-    nop = data['num_speakers']
-    first_m, last_m = db.get_first_message(conn), db.get_last_message(conn)
-    name1, dt1 = first_m['speaker_name'], first_m['date_time']
-    name2, dt2 = last_m['speaker_name'], last_m['date_time']
-    print(tmc, nop, name1, dt1, name2, dt2)
-
-    window['-TOTAL_MSG-'].update(f'Total message count: {tmc}')
-    window['-NUM_PPL-'].update(f'Number of participants: {nop}')
-    # update first and last messages as well
-    window['-FIRST_M-'].update(f'First message: \nFrom {name1} at {dt1}')
-    window['-LAST_M-'].update(f'Last message: \nFrom {name2} at {dt2}')
-    # also update the activity charts...
-
-
-def update_chat_table(date: str, window: sg.Window, conn= db.get_db()):
-    """Populates the CHAT-TABLE element with records at given date from database"""
-    data = db.get_msgs_at_date(date, conn)
-    transformed_data, ids = reformat_records(data)
-    window['-CHAT_TABLE-'].update(values=transformed_data)
-    window['-CHAT_TABLE-'].metadata = ids
-
-
-def reformat_records(db_output, search=False):
-    """Transforms records from db_output (dictionaries) into lists, as required by PySimpleGUI's table element
-    :param db_output: message records from db call in type dictionary
-    """
-    lt = []
-    ids = []
-    fmt = "%H:%M"
-    if search:
-        fmt = "%Y-%m-%d, %H:%M"
-
-    for dict in db_output:
-        time = dt.strptime(dict["date_time"], "%Y-%m-%d %H:%M:%S")  # error handling
-        time = time.strftime(fmt)
-        row = [time, dict['speaker_name'], dict['msg_content'], dict['msg_notes']]
-        lt.append(row)
-        ids.append(dict['msg_id'])
-    return lt, ids
-
-
-def update_results_table(search_str, window, conn):
-    """Populates the RESULTS-TABLE element with records at given date from database"""
-    data = db.keyword_search(search_str, conn)
-    data, ids = reformat_records(data, search=True)
-    window["-RESULTS_TABLE-"].update(values=data)
-    window["-RESULTS_TABLE-"].metadata = ids
-
-
-def datestr_to_tuple(datestr):
-    """"Converts a datestr in isoformat to three-tuple(m,d,y)"""
-    return (datestr[5:7], datestr[8:10], datestr[0:3])
-
-
-def render_message_rows(data):
-    """ Render list of dictionary type message records, into a column object
-    :param data: message records from db call in type dictionary
-    """
-    lt = []
-    for m in data:
-        time = dt.strptime(m["date_time"], "%Y-%m-%d %H:%M:%S")   # add error handling
-        time = time.strftime("%H:%M")
-        mid = m['msg_id']
-        # render each row, append to the column object.
-        row = [sg.T(time), sg.T(m['speaker_name']), sg.T(m['msg_content']),
-               sg.T(m['msg_id'], k= f"-MID_{mid}-", visible=True)]
-        lt.append(row)
-    # try window.extend_layout()
-    return lt
-
-
-def goto_date(date, window):
-    """
-    Updates window GUI components to display data associated with given date
-    :param date: date string
-    :return:
-    """
-    if date is not None:
-        try:
-            # reformat date for header display
-            date_heading = dt.strftime(datetime.date.fromisoformat(date), "%A, %d %B %Y")
-            window['-DATEHEADER_OUT-'].update(date_heading)
-            # fetch convo list
-            # fetch messages
-            update_chat_table(date, window)
-        except ValueError:
-            print("some error happened")
-            pass
+    return sg.Window("Message Notes", layout, margins=(10,10), finalize=True)
 
 
 def main():
@@ -185,11 +96,13 @@ def main():
     conn = db.get_db()
     fname = None
     current_date = db.get_earliest_date(conn)
-    window = make_window()
+    current_msg_id = None
+    main_window = make_window()
+    notes_window = None
 
     # Event loop
     while True:
-        event, values = window.read()  # values == keys
+        event, values = main_window.read()  # values == keys
         if event in (sg.WIN_CLOSED, 'Exit'):
             break
         # search tab
@@ -197,7 +110,8 @@ def main():
             search_term = values["-SEARCH-"].strip()
             # backend processes search
             if values['-SEARCH-'].strip() != "":
-                update_results_table(search_term, window, conn)
+                update_results_table(search_term, main_window, conn)
+        # TODO - add checkbox filters
 
         # main dashboard - import file pop up
         elif event == "import-btn":
@@ -206,13 +120,14 @@ def main():
                 try:
                     print(fname)  # replace with loadfile()
                     sg.popup("Successful import! Import info")
-                    update_summary(window)
+                    update_summary(main_window)
                     fname = None
                 except:
                     sg.popup("Import error - ")
         elif event == "refresh-btn":
-            update_summary(window)
-            window['calbtn'].default_date_m_d_y = datestr_to_tuple(db.get_earliest_date(conn))
+            update_summary(main_window)
+            main_window['calbtn'].default_date_m_d_y = datestr_to_tuple(db.get_earliest_date(conn))
+        # TODO - add elif event == "delete-all-data-btn"
 
         # date-view eventhandlers
         elif event == '-DATE2-':
@@ -220,7 +135,8 @@ def main():
                 try:
                     # reformat date for header
                     current_date = values['-DATE2-']
-                    goto_date(current_date, window)
+                    goto_date(current_date, main_window)
+                    # TODO - delete this
                     #date_heading = dt.strftime(dt.fromisoformat(current_date), "%A, %d %B %Y")
                     #window['-DATEHEADER_OUT-'].update(date_heading)
                     #update_chat_table(current_date, window)
@@ -228,24 +144,44 @@ def main():
                     print("some error happened")
                     pass
         elif event == "-CHAT_TABLE-":
-            if window['-CHAT_TABLE-'].metadata is not None:
-                msg_id = window['-CHAT_TABLE-'].metadata[values['-CHAT_TABLE-'][0]]
-                print(msg_id)
+            if main_window['-CHAT_TABLE-'].metadata is not None:
+                current_msg_id = main_window['-CHAT_TABLE-'].metadata[values['-CHAT_TABLE-'][0]]
+                print(f"current msg id is {current_msg_id}")
         elif event == "-TOGGLE_NOTES-":
-            print("working")
-            # popup window to display notes
-            # window.read()
+            # show pop up window
+
+            # event2, values2 = notes_window.read()
+            while True:
+                if event in (sg.WIN_CLOSED, 'Exit'):
+                    thewindow.close()
+                    if thewindow == notes_window:  # if closing win 2, mark as closed
+                        notes_window = None
+                    elif thewindow == main_window:  # if closing win 1, mark as closed
+                        main_window = None
+                elif current_msg_id is not None:
+                    msg_item = db.read_msg(current_msg_id, conn)
+                    print(msg_item)
+                    #  update notes box + display
+                    notes_window['-nw_MSGNAME-'].update(f"From {msg_item['speaker_name']}")
+                    notes_window['-nw_MSGTIME-'].update(f"at {msg_item['date_time']}")
+                    notes_window['-nw_MSGCONTENT-'].update(msg_item['msg_content'])
+                    notes_window['-nw_NOTEBOX-'].update(msg_item['msg_notes'])
+                elif event == "nw_commit-note-btn":
+                    print("btn working")
+                    break
+            notes_window.close()
+
         elif event == "next-day-btn":
             # fetch date of next day
             next_day = date.fromisoformat(current_date) + timedelta(days=1)     # next_day is a datetime.date obj
             current_date = next_day.isoformat()
-            goto_date(current_date, window)
+            goto_date(current_date, main_window)
         elif event == "prev-day-btn":
             # fetch date of prev day
             prev_day = date.fromisoformat(current_date) - timedelta(days=1)  # prev_day is a datetime.date obj
             current_date = prev_day.isoformat()
-            goto_date(current_date, window)
-    window.close()
+            goto_date(current_date, main_window)
+    main_window.close()
 
 
 if __name__ == "__main__":
