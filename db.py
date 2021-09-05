@@ -240,6 +240,11 @@ def get_earliest_date(conn=get_db()) -> str:
     return cur.fetchone()['min_date']
 
 
+def delete_all_msg(conn=get_db()):
+    cur = conn.cursor().execute("""DELETE FROM Messages""")
+    conn.commit()
+
+
 # This script i nicked from the flask documentation
 def query_db(query, args=(), one=False):
     cur = get_db().cursor().execute(query, args)
