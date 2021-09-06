@@ -79,35 +79,6 @@ def datestr_to_tuple(datestr):
     return (datestr[5:7], datestr[8:10], datestr[0:3])
 
 
-# not used
-def render_message_rows(data):
-    """ Render list of dictionary type message records, into a column object
-    :param data: message records from db call in type dictionary
-    """
-    lt = []
-    for m in data:
-        time = dt.strptime(m["date_time"], "%Y-%m-%d %H:%M:%S")   # add error handling
-        time = time.strftime("%H:%M")
-        mid = m['msg_id']
-        # render each row, append to the column object.
-        row = [sg.T(time), sg.T(m['speaker_name']), sg.T(m['msg_content']),
-               sg.T(m['msg_id'], k= f"-MID_{mid}-", visible=True)]
-        lt.append(row)
-    # try window.extend_layout()
-    return lt
-
-# not used
-def render_item(msg):
-    """msg is a fetched record (dictionary)"""
-    time = dt.strptime(msg["date_time"], "%Y-%m-%d %H:%M:%S")  # add error handling
-    time = time.strftime("%H:%M")
-    # mid = msg['msg_id']
-    # render each row, append to the column object.
-    row = [sg.T(time), sg.T(msg['speaker_name']), sg.T(msg['msg_content'])]
-    note = sg.T(msg["msg_notes"])
-    return row
-
-
 def goto_date(date, window):
     """
     Updates window GUI components to display data associated with given date
@@ -126,6 +97,21 @@ def goto_date(date, window):
         except ValueError:
             print("some error happened")
             pass
+
+
+def open_msg_record(window: sg.Window, msg: dict):
+    """
+    Renders the record view for populating a msg record
+    :param window: reference to the notes_window
+    :param msg: message record retrieved from database
+    :return:
+    """
+    window["-nw_MSG_NAME-"].update(f"From {msg['speaker_name']}")
+    window["-nw_MSG_TIME-"].update(f"at  {msg['date_time']}")
+    window["-nw_MSG_CONTENT-"].update(msg['msg_content'])
+    window["-nw_NOTE_BOX-"].update("")
+    window["-nw_NOTE_BOX-"].update(msg['msg_notes'])
+    window["-nw_COMMIT_MESSAGE-"].update(visible=False)
 
 
 # functions below are for the fall back interface; also for testing"""

@@ -1,7 +1,7 @@
 import PySimpleGUI as sg
 from datetime import datetime as dt, date, timedelta
 import db
-from controller import update_results_table, update_summary, datestr_to_tuple, goto_date
+from controller import update_results_table, update_summary, datestr_to_tuple, goto_date, open_msg_record
 import filehandler as fh
 
 
@@ -77,31 +77,20 @@ def make_window():
                               sg.Tab('Search', search_layout)
                               ]], k='-TABGROUP-', expand_x=True, expand_y=True)]]
 
-    return sg.Window('ChatViewer Demo', layout, finalize=True)
+    return sg.Window('ChatViewer Demo', layout, finalize=True, metadata="main")
 
 
 def make_notes_window():
     layout = [[sg.T("From ----", k="-nw_MSG_NAME-"), sg.T("at --:-- ", k="-nw_MSG_TIME-")],
               [sg.T(" "), sg.T("Fetched msg content here", k="-nw_MSG_CONTENT-")],
-              [sg.T("")],
-              [sg.Multiline("Notes here:", size=(50, 5), k="-nw_NOTE_BOX-")],
+              [sg.Multiline(size=(50, 5), k="-nw_NOTE_BOX-",
+                            no_scrollbar=True,
+                            expand_x=True, expand_y=True,
+                            do_not_clear=False)],
               [sg.B("Save", k="nw_commit-note-btn"), sg.T("saved!", k="-nw_COMMIT_MESSAGE-", visible=False)]]
 
-    return sg.Window("Message Notes", layout, margins=(10, 10), finalize=True)
-
-
-def open_msg_record(window: sg.Window, msg: dict):
-    """
-    Renders the record view for populating a msg record
-    :param window: reference to the notes_window
-    :param msg: message record retrieved from database
-    :return:
-    """
-    window["-nw_MSG_NAME-"].update(f"From {msg['speaker_name']}")
-    window["-nw_MSG_TIME-"].update(f"at  {msg['date_time']}")
-    window["-nw_MSG_CONTENT-"].update(msg['msg_content'])
-    window["-nw_NOTE_BOX-"].update(msg['msg_notes'])
-
+    return sg.Window("Message Notes", layout, margins=(10, 10), finalize=True,
+                     keep_on_top=True, metadata="notes")
 
 
 def main():
@@ -168,18 +157,21 @@ def main():
                 msg = db.read_msg(current_msg_id, conn)
                 if notes_window is not None:
                     #  update notes box + display
-                    open_msg_record(notes_window, msg)
-                    window["-nw_COMMIT_MESSAGE-"].update(visible=False)
+                    print(window.metadata)  # this returns 'main'
+                    open_msg_record(notes_window, msg)  # change focus to notes_window
 
         elif event == "-TOGGLE_NOTES-" and not notes_window:
-            # show pop up window
+            # show pop up second window
             notes_window = make_notes_window()
 
-        elif event == "nw_commit-note-btn":
-            print("btn working")
+        elif event == "nw_commit-note-btn" and current_msg_id is not None:
+            # collect input from multiline element
+            new_note = values["-nw_NOTE_BOX-"].rstrip()
             # commit notes to db
+            print(new_note)
+            db.add_note(current_msg_id, new_note, conn)
             # update text to say "saved!"
-            window["-nw_COMMIT_MESSAGE-"].update(visible=True)
+            notes_window["-nw_COMMIT_MESSAGE-"].update(visible=True)
 
         elif event == "next-day-btn":
             # fetch date of next day
@@ -191,6 +183,7 @@ def main():
             prev_day = date.fromisoformat(current_date) - timedelta(days=1)  # prev_day is a datetime.date obj
             current_date = prev_day.isoformat()
             goto_date(current_date, main_window)
+
     main_window.close()
 
 

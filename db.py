@@ -13,10 +13,11 @@ def dict_factory(cursor, row):
 
 def get_db():
     try:
-        conn = sqlite3.connect("chatviewer.db")
+        conn = sqlite3.connect("chatviewer.db", timeout=10)
         conn.row_factory = dict_factory
         return conn
     except sqlite3.Error:
+        print("connection error -- check database")
         return None
 
 
@@ -189,10 +190,10 @@ def add_note(msg_id: int, note: str, conn=get_db()):
     conn.commit()
 
 
-def get_note(msg_id: int, conn=get_db()):
+def get_note(msg_id: int, conn=get_db()) -> str:
     cur = conn.cursor()
     cur.execute("SELECT msg_notes from Messages WHERE msg_id = ?", (msg_id,))
-    conn.commit()
+    return cur.fetchone()['msg_notes']
 
 
 def remove_note(msg_id: int, conn=get_db()):
@@ -210,21 +211,33 @@ def add_tag(msg_id: int, tag_name: str, conn=get_db()):
     '''
     cur = conn.cursor()
     tag = tag_name.strip()
-    cur.execute("INSERT INTO TAG VALUES (?, ?)", (msg_id, tag))
-    conn.commit()
+    try:
+        cur.execute("INSERT INTO TAG VALUES (?, ?)", (msg_id, tag))
+        conn.commit()
+    except sqlite3.IntegrityError:
+        pass    #do nothing
 
 
-def get_tags(msg_id: int, conn=get_db()):
-    cur = conn.cursor()
-    cur.execute("SELECT tag_name FROM TAG WHERE msg_id = ?", (msg_id,))
-    return cur.fetchall()
+def get_tags(msg_id: int, conn=get_db()) -> List[str]:
+    """
+    Returns a list of tags tagged to message record with given msg_id
+    :param msg_id: reference to message record
+    :param conn: database connection; default is get_db()
+    :return: list of tag names
+    """
+    cur = conn.cursor().execute("SELECT tag_name FROM TAG WHERE msg_id = ?", (msg_id,))
+    rv = cur.fetchall()
+    return [item['tag_name'] for item in rv]
 
 
+# TODO - fix locked database
 def remove_tag(msg_id: int, tag_name: str, conn=get_db()):
-    cur = conn.cursor()
     tag_name = tag_name.strip()
-    cur.execute("DELETE FROM Tag WHERE msg_id = ? AND tag_name = ?", (msg_id, tag_name))
-    conn.commit()
+    # need to check the tag to remove is present
+    cur = conn.cursor()
+    if tag_name in get_tags(27, conn):
+        cur.execute("DELETE FROM Tag WHERE msg_id = ? AND tag_name = ?", (msg_id, tag_name))
+        conn.commit()
 
 
 def keyword_search(querystr: str, conn=get_db()):
@@ -254,4 +267,8 @@ def query_db(query, args=(), one=False):
 
 
 if __name__ == "__main__":
-    print(get_message_count_by_date())
+    print(get_note(1))
+
+    add_note(1, "this is a note")
+
+    print(get_note(1))
