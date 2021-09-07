@@ -72,11 +72,17 @@ def update_results_table(search_str, window, conn):
 
 def datestr_to_tuple(datestr):
     """"
-    Converts a datestring in isoformat to three-tuple(m,d,y)
-    :param datestr string containing a date in isoformat
-    :return same date in three-tuple format containing (mm, dd, yyyy)
+    Converts a datestring in isoformat to three-tuple(%m,%d,%Y)
     """
     return (datestr[5:7], datestr[8:10], datestr[0:3])
+
+
+def stringify_datetup(datetup):
+    """Converts (m-d-Y) date tuple to string in isoformat ("%Y-%m-%d")"""
+    Y = '{:04d}'.format(datetup[2])
+    m = '{:02d}'.format(datetup[0])
+    d = '{:02d}'.format(datetup[1])
+    return f'{Y}-{m}-{d}'
 
 
 def goto_date(date, window):
@@ -161,11 +167,8 @@ def select_msg(msg_id : str):
 
 def view_from_beginning():
     conn = get_db()
-    first_msg = msg_wrapper(get_first_message(conn))
+    first_msg = get_first_message(conn)
     print("first message")
-    # open relevant conversation
-    # render (in GUI)
-    # load commands()
 
 
 def search_by_keyword():

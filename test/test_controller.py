@@ -1,45 +1,24 @@
 import pytest
 from controller import *
 
+
 def get_test_conn():
     return
 
-def test_view_stats():
-    overview, first_msg, last_msg = view_stats()
-    print(overview, first_msg, last_msg)
+
+def test_stringify_datetup1():
+    tup = (1, 9, 2014)
+    datestr = stringify_datetup(tup)
+    assert datestr == "2014-01-09"
 
 
-def test_view_calendar():
-    assert False
+def test_stringify_datetup2():
+    tup = (10, 3, 2020)
+    datestr = stringify_datetup(tup)
+    assert datestr == "2020-10-03"
 
 
-def test_view_msgs_at_date():
-    assert False
-
-
-def test_select_msg():
-    assert False
-
-
-def test_view_from_beginning():
-    assert False
-
-
-def test_search_by_keyword():
-    assert False
-
-
-def test_prev_day():
-    assert False
-
-
-def test_next_day():
-    assert False
-
-
-def test_nav_menu():
-    assert False
-
-
-def test_main_menu():
-    assert False
+def test_stringify_datetup3():
+    tup = (10, 13, 2020)
+    datestr = stringify_datetup(tup)
+    assert datestr == "2020-10-13"

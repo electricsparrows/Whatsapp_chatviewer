@@ -267,8 +267,4 @@ def query_db(query, args=(), one=False):
 
 
 if __name__ == "__main__":
-    print(get_note(1))
-
-    add_note(1, "this is a note")
-
-    print(get_note(1))
+    print(get_earliest_date())

@@ -1,7 +1,8 @@
 import PySimpleGUI as sg
 from datetime import datetime as dt, date, timedelta
 import db
-from controller import update_results_table, update_summary, datestr_to_tuple, goto_date, open_msg_record
+from controller import update_results_table, update_summary, datestr_to_tuple, goto_date, open_msg_record, \
+    stringify_datetup
 import filehandler as fh
 
 
@@ -10,8 +11,7 @@ def make_window():
     sg.theme('Tan')
     med_btn = (10, 2)
     dummy_row = [None, None, None, None]
-    default_date = (11, 1, 2015)
-
+    def_date = (1, 11, 2015)
 
     # layouts
     main_layout = [
@@ -23,9 +23,6 @@ def make_window():
             [sg.T("First message: ....", k="-FIRST_M-")],
             [sg.T("Last message:...", k="-LAST_M-")]
             ], font= ("Helvetica 12 italic"))],
-        [sg.CalendarButton("  Select Date  ", target="-DATE1-", format="%Y-%m-%d"),
-        sg.Input(key="-DATE1-"), sg.Submit(" Go ", k="date-btn")],
-        [sg.T("")],
         []  # calendar heatmap
     ]
 
@@ -58,11 +55,12 @@ def make_window():
                                   metadata=None,
                                   key='-CHAT_TABLE-', row_height=30)]], expand_x=True)
 
+    date_header = sg.Col([[sg.T('---, -- ---------- ----', font=("Helvetica 16 italic"), k="-DATEHEADER_OUT-"),
+                           sg.In(k="-DATE-", visible=False, enable_events=True),  # field hidden
+                           sg.B(" v ", k="select-date-btn")]],
+                         justification='centre')
     date_layout = [
-        [sg.B(" < ", k="prev-day-btn"), sg.T('---, -- ---------- ----', font=("Helvetica 16 italic"), k="-DATEHEADER_OUT-"),
-         sg.In(k="-DATE2-", visible=False, enable_events=True),  # field hidden
-         sg.CalendarButton(" v ", format="%Y-%m-%d", target="-DATE2-", default_date_m_d_y=default_date, k='calbtn'),
-         sg.T(" "), sg.B(" > ", k="next-day-btn")],
+        [sg.B(" < ", k="prev-day-btn"), date_header, sg.B(" > ", k="next-day-btn")],
         [sg.T('')],
         [sg.T("Available Conversations", font=("Helvetica 12 bold"))],
         [sg.Listbox(values=["--", "--"], k="-CONVOLIST-"), sg.B("update")],
@@ -71,7 +69,8 @@ def make_window():
     ]
 
     layout = [[sg.Text('ChatViewer Application (demo)--', size=(38, 1), justification='left', font=("Helvetica 16 bold"),
-                k='-TEXT_HEADING-', enable_events=True)]]
+                k='-TEXT_HEADING-')]]
+    tab_padding = (50, 100)
     layout += [[sg.TabGroup([[sg.Tab('Main', main_layout),
                               sg.Tab('Date View', date_layout),
                               sg.Tab('Search', search_layout)
@@ -90,15 +89,16 @@ def make_notes_window():
               [sg.B("Save", k="nw_commit-note-btn"), sg.T("saved!", k="-nw_COMMIT_MESSAGE-", visible=False)]]
 
     return sg.Window("Message Notes", layout, margins=(10, 10), finalize=True,
-                     keep_on_top=True, metadata="notes")
+                     keep_on_top=True, metadata="notes", resizable=True)
 
 
 def main():
     # variables:
     conn = db.get_db()
     fname = None
-    current_date = db.get_earliest_date(conn)
+    current_date = db.get_earliest_date(conn)   # format: %Y-%m-%d
     current_msg_id = None
+
     main_window = make_window()
     notes_window = None
 
@@ -134,17 +134,17 @@ def main():
                     sg.popup("Import error - ")
         elif event == "refresh-btn":
             update_summary(main_window)
-            main_window['calbtn'].default_date_m_d_y = datestr_to_tuple(db.get_earliest_date(conn))
+            # main_window['calbtn'].default_date_m_d_y = datestr_to_tuple(db.get_earliest_date(conn))
         elif event == "data-wipe-btn":
             confirm = sg.popup_ok_cancel("Are you sure you want to delete all data?")
             if confirm == "OK":
                 db.delete_all_msg(conn)
 
         # date-view eventhandlers
-        elif event == '-DATE2-':
-            if values['-DATE2-'] not in (None, ""):
+        elif event == '-DATE-':
+            if values['-DATE-'] not in (None, ""):
                 try:
-                    current_date = values['-DATE2-']
+                    current_date = values['-DATE-']
                     goto_date(current_date, main_window)
                 except ValueError:
                     print("some error happened")
@@ -157,7 +157,7 @@ def main():
                 msg = db.read_msg(current_msg_id, conn)
                 if notes_window is not None:
                     #  update notes box + display
-                    print(window.metadata)  # this returns 'main'
+                    print(window.metadata)              # this returns 'main'
                     open_msg_record(notes_window, msg)  # change focus to notes_window
 
         elif event == "-TOGGLE_NOTES-" and not notes_window:
@@ -168,7 +168,6 @@ def main():
             # collect input from multiline element
             new_note = values["-nw_NOTE_BOX-"].rstrip()
             # commit notes to db
-            print(new_note)
             db.add_note(current_msg_id, new_note, conn)
             # update text to say "saved!"
             notes_window["-nw_COMMIT_MESSAGE-"].update(visible=True)
@@ -184,10 +183,17 @@ def main():
             current_date = prev_day.isoformat()
             goto_date(current_date, main_window)
 
+        elif event == "select-date-btn":
+            m_d_Y = sg.popup_get_date(start_mon=9, start_year=2015, no_titlebar=True)
+            if m_d_Y is not None:
+                current_date = stringify_datetup(m_d_Y)
+                goto_date(current_date, main_window)
+
     main_window.close()
 
 
 if __name__ == "__main__":
     main()
+
 
 
