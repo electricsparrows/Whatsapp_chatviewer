@@ -157,7 +157,7 @@ def get_message_count_by_date(conn=get_db()) -> dict:
     """
     returns message count per absolute date in each available year
     :param conn:
-    :return: list of tuples -- (date, msg_count)
+    :return: dictionary with key-value pairs corresponding to <isoformat date_str: message count (int)>
     """
     cur = conn.cursor().execute("""SELECT strftime('%Y-%m-%d', date_time) as valDate, COUNT(msg_id) as msg_count
                                     FROM Messages
@@ -175,13 +175,17 @@ def get_message_count_by_year(conn=get_db()) -> dict:
     """
         returns message count per year
         :param conn: database connection; connects to chatViewer.db by default
-        :return: dictionary with key-value pairs representing (year, msg_count)
+        :return: dictionary with key-value pairs representing <year_str: str, msg_count (int) >
     """
     cur = conn.cursor().execute("""SELECT strftime('%Y', date_time) as valYear, COUNT(msg_id) as msg_count
                                     FROM Messages
                                     GROUP BY valYear
                                     ORDER BY valYear""")
-    return cur.fetchall()
+    rv = cur.fetchall()   # list of dictionaries
+    res = {}
+    for r in rv:
+        res[r['valYear']] = r['msg_count']
+    return res
 
 
 def add_note(msg_id: int, note: str, conn=get_db()):
@@ -267,4 +271,6 @@ def query_db(query, args=(), one=False):
 
 
 if __name__ == "__main__":
-    print(get_earliest_date())
+    print(get_message_count_by_date())  # x: time-series v. y: msg_count
+    print("")
+    print(get_message_count_by_year())

@@ -26,6 +26,11 @@ WhatsApp chat history files, to browse and manage your messages more convenientl
 
 ------------------------------------------------
 ### Things to do:
+
+UAT TESTING:
+- [ ] test file import process
+
+
 - [x] connect database functions with the controller functions
 - [x] implement `yoy_activity`
 - [x] implement `retrieve by keyword`
@@ -39,8 +44,8 @@ WhatsApp chat history files, to browse and manage your messages more convenientl
 - [ ] complete unit tests in test_filehandler
 
 - [x] build gui components
-    - [ ] display notes component
-      [ ] edit/ add msg note component
+    - [x] display notes component
+      [x] edit/ add msg note component
     - [ ] add tag component
     - [ ] view tags component
     - [ ] implement conversation list
@@ -56,6 +61,6 @@ WhatsApp chat history files, to browse and manage your messages more convenientl
       - [x] enter search keyword
 
 
-
-
-
+display available convo pointers in list box
+when pointer is selected:
+    update table with pointer

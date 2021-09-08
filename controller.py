@@ -3,6 +3,7 @@ from db import get_db, get_first_message, get_last_message, get_msgs_at_date, ge
 from datetime import datetime as dt
 import PySimpleGUI as sg
 
+
 # eventHandlers
 def dummy_readfile(path):
     """ test function to validate path"""
@@ -30,10 +31,10 @@ def update_summary(window: sg.Window, conn= db.get_db()):
     # also update the activity charts...
 
 
-def update_chat_table(date: str, window: sg.Window, conn= db.get_db()):
+def update_chat_table(date: str, window: sg.Window, conn):
     """Populates the CHAT-TABLE element with records at given date from database"""
-    data = db.get_msgs_at_date(date, conn)
-    transformed_data, ids = reformat_records(data)
+    records = db.get_msgs_at_date(date, conn)           # returns msg records
+    transformed_data, ids = reformat_records(records)   # turns into lists
     window['-CHAT_TABLE-'].update(values=transformed_data)
     window['-CHAT_TABLE-'].metadata = ids
 
@@ -85,7 +86,7 @@ def stringify_datetup(datetup):
     return f'{Y}-{m}-{d}'
 
 
-def goto_date(date, window):
+def goto_date(date, window, conn):
     """
     Updates window GUI components to display data associated with given date
     :param date: date string
@@ -99,7 +100,7 @@ def goto_date(date, window):
             window['-DATEHEADER_OUT-'].update(date_heading)
             # fetch convo list
             # fetch messages
-            update_chat_table(date, window)
+            update_chat_table(date, window, conn)
         except ValueError:
             print("some error happened")
             pass

@@ -59,3 +59,16 @@ def get_bigrams(text):
         else:
             res.append(bag.pop())
     return res
+
+
+def gen_activity_chart:
+    pass
+
+
+
+def main():
+    pass
+
+
+if __name__ == "__main__":
+    main()

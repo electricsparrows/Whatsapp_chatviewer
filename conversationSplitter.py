@@ -20,7 +20,7 @@ def conversation_splitter(data):
     message records are sorted in chronological order and in order by msg_id (indexed).
 
     - it is assumed that all messages belong to one or more conversations.
-    :return: list of pointers to convo_heads
+    :return: list of msg_id of messages classified as convo_heads
     """
     timegap_threshold = datetime.timedelta(seconds=3600)    # 1 hr gap between messages
     convo_heads= []

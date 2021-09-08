@@ -4,6 +4,7 @@ import db
 from controller import update_results_table, update_summary, datestr_to_tuple, goto_date, open_msg_record, \
     stringify_datetup
 import filehandler as fh
+import conversationSplitter
 
 
 def make_window():
@@ -23,7 +24,9 @@ def make_window():
             [sg.T("First message: ....", k="-FIRST_M-")],
             [sg.T("Last message:...", k="-LAST_M-")]
             ], font= ("Helvetica 12 italic"))],
-        []  # calendar heatmap
+        []  # TODO - make activity heatmap
+        # figure out how to make heatmap
+        # embed image into main layout.
     ]
 
     search_layout = [
@@ -57,14 +60,15 @@ def make_window():
 
     date_header = sg.Col([[sg.T('---, -- ---------- ----', font=("Helvetica 16 italic"), k="-DATEHEADER_OUT-"),
                            sg.In(k="-DATE-", visible=False, enable_events=True),  # field hidden
-                           sg.B(" v ", k="select-date-btn")]],
-                         justification='centre')
+                           sg.B(" v ", k="select-date-btn")]])
     date_layout = [
-        [sg.B(" < ", k="prev-day-btn"), date_header, sg.B(" > ", k="next-day-btn")],
+        [sg.B(" < ", k="prev-day-btn"), sg.Stretch(), date_header, sg.Stretch(), sg.B(" > ", k="next-day-btn")],
         [sg.T('')],
         [sg.T("Available Conversations", font=("Helvetica 12 bold"))],
-        [sg.Listbox(values=["--", "--"], k="-CONVOLIST-"), sg.B("update")],
-        [sg.B("Show msg notes", k="-TOGGLE_NOTES-", enable_events=True)],
+        [sg.Listbox(values=["option1", "option2", "option3"], size= (30, 3), k="-CONVOLIST-", enable_events=True),
+         sg.T(" ", expand_x=True),
+         sg.B("update", k="show-convos-btn"),
+         sg.B("Show msg notes", k="-TOGGLE_NOTES-")],
         [chat_area]
     ]
 
@@ -90,14 +94,16 @@ def make_notes_window():
 
     return sg.Window("Message Notes", layout, margins=(10, 10), finalize=True,
                      keep_on_top=True, metadata="notes", resizable=True)
+                    # TODO - add tagging function
 
 
 def main():
     # variables:
-    conn = db.get_db()
-    fname = None
-    current_date = db.get_earliest_date(conn)   # format: %Y-%m-%d
-    current_msg_id = None
+    conn = db.get_db()                         # connection to relevant database
+    fname = None                               # file path to retrieve file to be imported from
+    current_date = db.get_earliest_date(conn)  # current date is the 'date' the view will update
+                                                # displayed messages according to. (format: %Y-%m-%d)
+    current_msg_id = None                      # msg_id of the current selected message
 
     main_window = make_window()
     notes_window = None
@@ -124,6 +130,7 @@ def main():
         # main dashboard - import file pop up
         elif event == "import-btn":
             fname = sg.popup_get_file('Document to open', file_types=(("Text files", "*.txt"),))
+            # TODO - input path can currently be edited - need to block that/ error handling
             if fname:
                 try:
                     fh.loadfile(fname)
@@ -132,9 +139,11 @@ def main():
                     fname = None
                 except:
                     sg.popup("Import error - ")
+
         elif event == "refresh-btn":
             update_summary(main_window)
-            # main_window['calbtn'].default_date_m_d_y = datestr_to_tuple(db.get_earliest_date(conn))
+            current_date = db.get_earliest_date(conn)
+
         elif event == "data-wipe-btn":
             confirm = sg.popup_ok_cancel("Are you sure you want to delete all data?")
             if confirm == "OK":
@@ -145,7 +154,7 @@ def main():
             if values['-DATE-'] not in (None, ""):
                 try:
                     current_date = values['-DATE-']
-                    goto_date(current_date, main_window)
+                    goto_date(current_date, main_window, conn)
                 except ValueError:
                     print("some error happened")
                     pass
@@ -176,18 +185,33 @@ def main():
             # fetch date of next day
             next_day = date.fromisoformat(current_date) + timedelta(days=1)     # next_day is a datetime.date obj
             current_date = next_day.isoformat()
-            goto_date(current_date, main_window)
+            goto_date(current_date, main_window, conn)
         elif event == "prev-day-btn":
             # fetch date of prev day
             prev_day = date.fromisoformat(current_date) - timedelta(days=1)  # prev_day is a datetime.date obj
             current_date = prev_day.isoformat()
-            goto_date(current_date, main_window)
+            goto_date(current_date, main_window, conn)
 
         elif event == "select-date-btn":
             m_d_Y = sg.popup_get_date(start_mon=9, start_year=2015, no_titlebar=True)
             if m_d_Y is not None:
                 current_date = stringify_datetup(m_d_Y)
-                goto_date(current_date, main_window)
+                goto_date(current_date, main_window, conn)
+
+        elif event == "show-convos-btn":
+            # convo_list = fetch list of convo heads at given date
+            msg_at_date = db.get_msgs_at_date(current_date, conn)
+            cvheads = conversationSplitter.conversation_splitter(msg_at_date)     # this returns msg_ids
+            listbox_lbls = [db.read_msg(ch, conn)['date_time'] for ch in cvheads] # TODO - display participants as well
+            main_window['-CONVOLIST-'].update(listbox_lbls)
+            main_window['-CONVOLIST-'].metadata = cvheads
+
+        elif event == "-CONVOLIST-":
+            print(values["-CONVOLIST-"])
+            # get truncated messages at given date
+            # all_ids = main_window['-CHAT_TABLE-'].metadata
+            # locate the index of the selected cvhead
+            # i.e. get messages from id x to id y -- i wish it could just jump to select that message...
 
     main_window.close()
 
