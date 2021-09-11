@@ -30,7 +30,6 @@ WhatsApp chat history files, to browse and manage your messages more convenientl
 UAT TESTING:
 - [ ] test file import process
 
-
 - [x] connect database functions with the controller functions
 - [x] implement `yoy_activity`
 - [x] implement `retrieve by keyword`
@@ -48,7 +47,7 @@ UAT TESTING:
       [x] edit/ add msg note component
     - [ ] add tag component
     - [ ] view tags component
-    - [ ] implement conversation list
+    - [x] implement conversation list
     - [ ] activity heatmap/ chart
     
 - [x] test file import
@@ -59,8 +58,16 @@ UAT TESTING:
       - [x] enter file path (restrict in gui component)
       - [x] enter date str (use isoformat everywhere)
       - [x] enter search keyword
+  
+
+Activity chaart
+- transform each date key into a datetime object.
+- use strftime to fetch DoW (%A) and #.week from the datetime (%U)
+  - i need a dataframe with three columns. 
+- then I can pivot the msg_count values along those dimensions
+- plot that on the heatmap. (DoW , #. week )
 
 
-display available convo pointers in list box
-when pointer is selected:
-    update table with pointer
+(these are not possible)
+- each square on hover -- return the date 
+- clicking the square will take you to the corresponding dateview.

@@ -1,3 +1,5 @@
+from typing import List
+import conversationSplitter
 import db
 from db import get_db, get_first_message, get_last_message, get_msgs_at_date, get_message_count_by_date, get_message_count_by_year
 from datetime import datetime as dt
@@ -31,10 +33,19 @@ def update_summary(window: sg.Window, conn= db.get_db()):
     # also update the activity charts...
 
 
-def update_chat_table(date: str, window: sg.Window, conn):
+def update_chat_table(records: List[dict], window: sg.Window, conn, cv_head=None):
     """Populates the CHAT-TABLE element with records at given date from database"""
-    records = db.get_msgs_at_date(date, conn)           # returns msg records
-    transformed_data, ids = reformat_records(records)   # turns into lists
+    #records = db.get_msgs_at_date(date, conn)           # returns msg records
+    index = 0
+    if cv_head is not None:
+        for rec in records:
+            # iterate through records to find index position of the cv_head, then slice list there.
+            if rec['msg_id'] == cv_head:
+                break
+            else:
+                index += 1
+        records = records[index:]
+    transformed_data, ids = reformat_records(records)
     window['-CHAT_TABLE-'].update(values=transformed_data)
     window['-CHAT_TABLE-'].metadata = ids
 
@@ -51,15 +62,15 @@ def reformat_records(db_output, search=False):
     lt = []
     ids = []
     fmt = "%H:%M"
-    if search:
+    if search:                      # use different datetime formatting for search-results view
         fmt = "%Y-%m-%d, %H:%M"
 
-    for dict in db_output:
-        time = dt.strptime(dict["date_time"], "%Y-%m-%d %H:%M:%S")  # error handling
+    for rec in db_output:
+        time = dt.strptime(rec["date_time"], "%Y-%m-%d %H:%M:%S")  # TODO - error handling required
         time = time.strftime(fmt)
-        row = [time, dict['speaker_name'], dict['msg_content'], dict['msg_notes']]
+        row = [time, rec['speaker_name'], rec['msg_content'], rec['msg_notes']]
         lt.append(row)
-        ids.append(dict['msg_id'])
+        ids.append(rec['msg_id'])
     return lt, ids
 
 
@@ -98,9 +109,16 @@ def goto_date(date, window, conn):
             # reformat date for header display
             date_heading = dt.strftime(dt.fromisoformat(date), "%A, %d %B %Y")
             window['-DATEHEADER_OUT-'].update(date_heading)
-            # fetch convo list
+            data = db.get_msgs_at_date(date, conn)
+
+            # populate conversations listbox
+            cvheads = conversationSplitter.conversation_splitter(data)  # this returns msg_ids
+            listbox_lbls = [(db.read_msg(ch, conn)['date_time'], ch) for ch in cvheads]  # too difficult to fetch participants + unnecessary
+            window['-CONVOLIST-'].update(listbox_lbls)
+            window['-CONVOLIST-'].metadata = cvheads
+
             # fetch messages
-            update_chat_table(date, window, conn)
+            update_chat_table(data, window, conn)
         except ValueError:
             print("some error happened")
             pass

@@ -153,16 +153,18 @@ def get_last_message(conn=get_db()):
     return cur.fetchone()
 
 
-def get_message_count_by_date(conn=get_db()) -> dict:
+def get_message_count_by_dateyear(year: int, conn=get_db()) -> dict:
     """
     returns message count per absolute date in each available year
     :param conn:
     :return: dictionary with key-value pairs corresponding to <isoformat date_str: message count (int)>
     """
-    cur = conn.cursor().execute("""SELECT strftime('%Y-%m-%d', date_time) as valDate, COUNT(msg_id) as msg_count
+    cur = conn.cursor().execute("""SELECT strftime('%Y-%m-%d', date_time) as valDate, 
+                                          COUNT(msg_id) as msg_count
                                     FROM Messages
+                                    WHERE strftime('%Y', valDate) = ?
                                     GROUP BY valDate
-                                    ORDER BY valDate""")
+                                    ORDER BY valDate""", (str(year),))
     # tidy the return data format into a single dictionary
     rv = cur.fetchall()
     res = {}
@@ -244,9 +246,10 @@ def remove_tag(msg_id: int, tag_name: str, conn=get_db()):
         conn.commit()
 
 
-def keyword_search(querystr: str, conn=get_db()):
+def keyword_search(keyword: str, conn=get_db()):
+    param = (keyword, filter)
     cur = conn.cursor()
-    qstr = f'%{querystr.strip()}%'
+    qstr = f'%{keyword.strip()}%'
     cur.execute("SELECT * From Messages WHERE msg_content LIKE ? ESCAPE ? ", (qstr, "\\"))
     return cur.fetchall()
 
@@ -271,6 +274,4 @@ def query_db(query, args=(), one=False):
 
 
 if __name__ == "__main__":
-    print(get_message_count_by_date())  # x: time-series v. y: msg_count
-    print("")
-    print(get_message_count_by_year())
+    print(get_message_count_by_dateyear(2018))

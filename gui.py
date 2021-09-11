@@ -2,7 +2,7 @@ import PySimpleGUI as sg
 from datetime import datetime as dt, date, timedelta
 import db
 from controller import update_results_table, update_summary, datestr_to_tuple, goto_date, open_msg_record, \
-    stringify_datetup
+    stringify_datetup, update_chat_table
 import filehandler as fh
 import conversationSplitter
 
@@ -63,11 +63,9 @@ def make_window():
                            sg.B(" v ", k="select-date-btn")]])
     date_layout = [
         [sg.B(" < ", k="prev-day-btn"), sg.Stretch(), date_header, sg.Stretch(), sg.B(" > ", k="next-day-btn")],
-        [sg.T('')],
         [sg.T("Available Conversations", font=("Helvetica 12 bold"))],
-        [sg.Listbox(values=["option1", "option2", "option3"], size= (30, 3), k="-CONVOLIST-", enable_events=True),
+        [sg.Listbox(values=[], size= (30, 3), k="-CONVOLIST-", enable_events=True),
          sg.T(" ", expand_x=True),
-         sg.B("update", k="show-convos-btn"),
          sg.B("Show msg notes", k="-TOGGLE_NOTES-")],
         [chat_area]
     ]
@@ -198,20 +196,11 @@ def main():
                 current_date = stringify_datetup(m_d_Y)
                 goto_date(current_date, main_window, conn)
 
-        elif event == "show-convos-btn":
-            # convo_list = fetch list of convo heads at given date
-            msg_at_date = db.get_msgs_at_date(current_date, conn)
-            cvheads = conversationSplitter.conversation_splitter(msg_at_date)     # this returns msg_ids
-            listbox_lbls = [db.read_msg(ch, conn)['date_time'] for ch in cvheads] # TODO - display participants as well
-            main_window['-CONVOLIST-'].update(listbox_lbls)
-            main_window['-CONVOLIST-'].metadata = cvheads
-
         elif event == "-CONVOLIST-":
-            print(values["-CONVOLIST-"])
-            # get truncated messages at given date
-            # all_ids = main_window['-CHAT_TABLE-'].metadata
-            # locate the index of the selected cvhead
-            # i.e. get messages from id x to id y -- i wish it could just jump to select that message...
+            selected_cvhead = values["-CONVOLIST-"][0][1]   # value returns [(datetime stamp, msg_id)]
+            # get truncated messages list at given date
+            msgs = db.get_msgs_at_date(current_date, conn)
+            update_chat_table(msgs, window, conn, selected_cvhead)
 
     main_window.close()
 
