@@ -138,14 +138,49 @@ def test_line_parse_exceptions(s):
     with pytest.raises(Exception):
         t = parse(s)
 
+
 # get_name tests
 # testcases = normal name, name with weird characters, phone number, no name
 
 # get_content_str tests
 # testcases = short message, long message, strange characters, hyperlinks
 
-# guess_pattern_from_sample
-# could make up some samples here
+
+def test_guess_pattern_from_sample01():
+    arg = ['11/20/15, 12:40 - Bob',
+           '1/5/16, 03:14 - apple:',
+           '2/20/16, 12:40 - Bob',
+           '12/1/16, 12:40 - Bob',
+           '11/25/15, 12:40 - Bob']
+    foo = guess_pattern_from_sample(arg)
+    assert foo == 'pat3'
+
+
+def test_guess_pattern_from_sample02():
+    arg = ['[4/10/2020, 2:20:56 PM] +44 7555 998877',
+           '[4/11/2020, 2:20:56 PM] +44 7555 998877',
+           '[23/10/2020, 2:20:56 PM] +44 7555 998877',
+           '[2/2/2021, 8:01:59 PM] +44 7555 998877',
+           '[13/4/2021, 7:25:08 PM] +44 7555 998877']
+    foo = guess_pattern_from_sample(arg)
+    assert foo == 'pat1'
+
+
+def test_guess_pattern_from_sample03():
+    arg = ['20/09/2016, 21:39 - Charles:',
+           '11/10/2016, 04:58 - Rachel:',
+           '13/10/2016, 12:55 - Charles:',
+           '05/11/2016, 09:09 - Charles:',
+           '12/11/2016, 06:53 - Rachel']
+    foo = guess_pattern_from_sample(arg)
+    assert foo == 'pat2'
+
+
+def test_guess_pattern_from_sample04():
+    arg = []
+    with pytest.raises(Exception):
+        guess_pattern_from_sample(arg)
+
 
 # get_ts_ref
 # test on testfiles

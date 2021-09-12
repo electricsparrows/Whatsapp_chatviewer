@@ -5,6 +5,7 @@ from datetime import datetime as dt
 import db
 from typing import List
 import time
+from pathlib import Path
 
 # module constants
 RGX_PATTERNS = {
@@ -29,7 +30,7 @@ def get_filepath():
 
 def loadfile(path: str):
     """
-    This is the key function
+    This is the key function to use
     :param path: path to file to be imported.
     :return: no. of successful imports and no. of errors
     """
@@ -99,17 +100,7 @@ def line_parse(ln: str, rgx, fmt) -> tuple:
 
     msg_content = get_content_str(ln, k)
 
-    # is_convo_head flag
-
     return msg_dt, msg_name, msg_content
-
-
-def is_convo_head(prev_ts: datetime.datetime, msg_content: str):
-    # examine content and guess if new convo.
-    # see if any greetings are in msg_content
-    # - compile a list of greeting words
-    # else: compare time delta from timestamp of prev message
-    return False
 
 
 def get_load_time(loadfunc, filepath):
@@ -183,7 +174,16 @@ def guess_pattern_from_sample(ts_sample: List[str]):
                 else:
                     tal[pat_ref] = 1
     # get highest freq:
-    mode = max(tal.values())
-    for k, v in tal.items():
-        if v == mode:
-            return k
+    if len(tal) > 0:
+        mode = max(tal.values())
+        for k, v in tal.items():
+            if v == mode:
+                return k
+    else:
+        raise IndexError("TS sample provided is null")
+
+
+if __name__ == "__main__":
+    test_files_dir = Path("C:\\Users\\Cindy\\PycharmProjects\\ChatViewer-testfiles")
+    p = Path(test_files_dir)
+    in_file = p / "test05.txt"

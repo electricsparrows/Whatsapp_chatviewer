@@ -3,7 +3,6 @@ import string
 from datetime import datetime as dt
 from pathlib import Path
 import db
-import filehandler as fh
 
 # globals
 test_files_dir = "C:\\Users\\Cindy\\PycharmProjects\\ChatViewer-testfiles"
@@ -23,8 +22,8 @@ def conversation_splitter(data):
     :return: list of msg_id of messages classified as convo_heads
     """
     timegap_threshold = datetime.timedelta(seconds=3600)    # 1 hr gap between messages
-    convo_heads= []
-    prev_dtstr = None
+    convo_heads = []
+    prev_dtstr  = None
 
     for m in data:
         # if msg_content contains any greeting, reduce time-gap threshold to 30 mins
@@ -58,13 +57,12 @@ def calc_timedelta(time1: str, time2: str) -> datetime.timedelta:
         return datetime.timedelta(seconds=0)
     dt1 = convert_dtstr_to_datetime(time1)
     dt2 = convert_dtstr_to_datetime(time2)
-    return abs(dt2 - dt1)  # timedelta in seconds
+    return abs(dt2 - dt1)                   # timedelta in seconds
 
 
 def main():
     data = db.get_msgs_at_date("2016-01-06")
     ptrs = conversation_splitter(data)
-
     for ch in ptrs:
         print(db.read_msg(ch)['msg_content'])
 

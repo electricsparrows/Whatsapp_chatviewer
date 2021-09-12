@@ -10,13 +10,15 @@ import conversationSplitter
 def make_window():
     # style settings:
     sg.theme('Tan')
+    font_heading = ("Comic 16 italic")
+    font_body = "Comic"
     med_btn = (10, 2)
     dummy_row = [None, None, None, None]
     def_date = (1, 11, 2015)
 
     # layouts
     main_layout = [
-        [sg.Text("Main Dashboard", font=("Helvetica 16 italic"))],
+        [sg.Text("Main Dashboard", font=font_heading)],
         [sg.B("Import File", k="import-btn"), sg.B("Refresh", k="refresh-btn"), sg.B("Delete all", k="data-wipe-btn")],
         [sg.Frame("At a Glance...", [
             [sg.T("Total message count: ", k="-TOTAL_MSG-")],
@@ -24,13 +26,11 @@ def make_window():
             [sg.T("First message: ....", k="-FIRST_M-")],
             [sg.T("Last message:...", k="-LAST_M-")]
             ], font= ("Helvetica 12 italic"))],
-        []  # TODO - make activity heatmap
-        # figure out how to make heatmap
-        # embed image into main layout.
+        []  # TODO - embed activity heatmap
     ]
 
     search_layout = [
-                     [sg.T("Search Logs: ", font=("Helvetica 16 bold"))],
+                     [sg.T("Search Logs: ", font=font_heading)],
                      [sg.T()],
                      [sg.Input(default_text="Search Chat Logs", key="-SEARCH-"),
                       sg.Submit("  Search Messages >  ", k="search-btn")],
@@ -58,11 +58,11 @@ def make_window():
                                   metadata=None,
                                   key='-CHAT_TABLE-', row_height=30)]], expand_x=True)
 
-    date_header = sg.Col([[sg.T('---, -- ---------- ----', font=("Helvetica 16 italic"), k="-DATEHEADER_OUT-"),
-                           sg.In(k="-DATE-", visible=False, enable_events=True),  # field hidden
+    date_header = sg.Col([[sg.T('---, -- ---------- ----', font=font_heading, k="-DATEHEADER_OUT-"),
+                           sg.In(k="-DATE-", visible=False, enable_events=True),      # field hidden
                            sg.B(" v ", k="select-date-btn")]])
     date_layout = [
-        [sg.B(" < ", k="prev-day-btn"), sg.Stretch(), date_header, sg.Stretch(), sg.B(" > ", k="next-day-btn")],
+        [sg.B(" < ", k="prev-day-btn"), sg.T(""*10), date_header, sg.T(""*10), sg.B(" > ", k="next-day-btn")],
         [sg.T("Available Conversations", font=("Helvetica 12 bold"))],
         [sg.Listbox(values=[], size= (30, 3), k="-CONVOLIST-", enable_events=True),
          sg.T(" ", expand_x=True),
@@ -100,11 +100,11 @@ def main():
     conn = db.get_db()                         # connection to relevant database
     fname = None                               # file path to retrieve file to be imported from
     current_date = db.get_earliest_date(conn)  # current date is the 'date' the view will update
-                                                # displayed messages according to. (format: %Y-%m-%d)
+                                                # message display according to. (format: %Y-%m-%d)
     current_msg_id = None                      # msg_id of the current selected message
 
-    main_window = make_window()
-    notes_window = None
+    main_window = make_window()                 # main window
+    notes_window = None                         # window of the add/view notes popup
 
     # Event loop
     while True:
@@ -130,15 +130,16 @@ def main():
             fname = sg.popup_get_file('Document to open', file_types=(("Text files", "*.txt"),))
             # TODO - input path can currently be edited - need to block that/ error handling
             if fname:
-                try:
+                #try:
                     fh.loadfile(fname)
                     sg.popup("Successful import! Import info")
-                    update_summary(main_window)
+                    #update_summary(main_window)
                     fname = None
-                except:
-                    sg.popup("Import error - ")
+                #except:
+                    #sg.popup("Import error - ")
 
         elif event == "refresh-btn":
+            # add handling for no records
             update_summary(main_window)
             current_date = db.get_earliest_date(conn)
 

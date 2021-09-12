@@ -67,11 +67,17 @@ def generate_import_ref(conn=get_db()):
     # fetch the last import ref
     try:
         cur = conn.cursor()
-        last = cur.execute('SELECT max(import_ref) FROM MESSAGES').fetchone()
-        return int(last[0]) + 1
+        last = cur.execute('''SELECT max(import_ref) AS 'imp_ref' FROM MESSAGES''').fetchone()
+        return last['imp_ref'] + 1
     except sqlite3.OperationalError:
         # return a random number
         return random.randint(0, 10)
+
+
+def messageStore_is_empty(conn=get_db()) -> bool:
+    """ Indicates whether the database/ message table is currently empty"""
+    cur = conn.cursor().execute("""SELECT * FROM Messages""").fetchall()
+    return len(cur) == 0
 
 
 def summary(conn=get_db()):
@@ -274,4 +280,5 @@ def query_db(query, args=(), one=False):
 
 
 if __name__ == "__main__":
-    print(get_message_count_by_dateyear(2018))
+    #print(get_message_count_by_dateyear(2018))
+    print(messageStore_is_empty())

@@ -1,7 +1,7 @@
 from typing import List
 import conversationSplitter
 import db
-from db import get_db, get_first_message, get_last_message, get_msgs_at_date, get_message_count_by_date, get_message_count_by_year
+from db import get_db, get_first_message, get_last_message, get_msgs_at_date, get_message_count_by_dateyear, get_message_count_by_year
 from datetime import datetime as dt
 import PySimpleGUI as sg
 
@@ -15,22 +15,27 @@ def dummy_readfile(path):
 
 
 def update_summary(window: sg.Window, conn= db.get_db()):
-    """updates the "At a glance" variables"""
-    data = db.summary(conn)
+    """updates the "At a glance" text elements on main screen dashboard"""
     # fetch data from database
-    tmc = data['total_msgs']
-    nop = data['num_speakers']
-    first_m, last_m = db.get_first_message(conn), db.get_last_message(conn)
-    name1, dt1 = first_m['speaker_name'], first_m['date_time']
-    name2, dt2 = last_m['speaker_name'], last_m['date_time']
-    print(tmc, nop, name1, dt1, name2, dt2)
+    data = db.summary(conn)
+    if data is not None:
+        tmc = data['total_msgs']
+        nop = data['num_speakers']
+        first_m, last_m = db.get_first_message(conn), db.get_last_message(conn)
+        name1, dt1 = first_m['speaker_name'], first_m['date_time']
+        name2, dt2 = last_m['speaker_name'], last_m['date_time']
+    else:
+        tmc = 0
+        nop = 0
+        name1, name2 = 'xxx', 'yyy'
+        dt1, dt2 = "--/--/-- --:--", "--/--/-- --:--"
 
     window['-TOTAL_MSG-'].update(f'Total message count: {tmc}')
     window['-NUM_PPL-'].update(f'Number of participants: {nop}')
     # update first and last messages as well
     window['-FIRST_M-'].update(f'First message: \nFrom {name1} at {dt1}')
     window['-LAST_M-'].update(f'Last message: \nFrom {name2} at {dt2}')
-    # also update the activity charts...
+    # TODO - also update the activity charts...
 
 
 def update_chat_table(records: List[dict], window: sg.Window, conn, cv_head=None):
