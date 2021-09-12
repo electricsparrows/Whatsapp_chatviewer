@@ -42,9 +42,7 @@ def convert_dtstr_to_datetime(dt_str: str) -> datetime.datetime:
 
 def has_greetings(msg_content: str) -> bool:
     greetings = ("hi", "hello", "hey", "yo", "hiya")
-    words = msg_content.lower().split()         # this gives unigrams
-    for i in range(len(words)):
-        words[i] = words[i].strip(string.punctuation)
+    words = [w.strip(string.punctuation) for w in msg_content.lower().split()]
     for g in greetings:
         if g in words:
             return True
