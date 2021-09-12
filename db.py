@@ -64,17 +64,27 @@ def insert_parsed(parsed_tuples: List[tuple], conn=get_db()):
 
 
 def generate_import_ref(conn=get_db()):
-    # fetch the last import ref
+    """
+    Returns a unique import reference.
+    :param conn:
+    :return:
+    """
     try:
         cur = conn.cursor()
-        last = cur.execute('''SELECT max(import_ref) AS 'imp_ref' FROM MESSAGES''').fetchone()
+        if not messages_is_empty():
+            # attempts to fetch the last import ref
+            last = cur.execute('''SELECT max(import_ref) AS 'imp_ref' FROM MESSAGES''').fetchone()
+        else:
+            last = random.randint(0, 10)
+
         return last['imp_ref'] + 1
-    except sqlite3.OperationalError:
+
+    except sqlite3.OperationalError:    # if tables don't exist yet
         # return a random number
         return random.randint(0, 10)
 
 
-def messageStore_is_empty(conn=get_db()) -> bool:
+def messages_is_empty(conn=get_db()) -> bool:
     """ Indicates whether the database/ message table is currently empty"""
     cur = conn.cursor().execute("""SELECT * FROM Messages""").fetchall()
     return len(cur) == 0

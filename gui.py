@@ -97,14 +97,16 @@ def make_notes_window():
 
 def main():
     # variables:
-    conn = db.get_db()                         # connection to relevant database
-    fname = None                               # file path to retrieve file to be imported from
-    current_date = db.get_earliest_date(conn)  # current date is the 'date' the view will update
-                                                # message display according to. (format: %Y-%m-%d)
-    current_msg_id = None                      # msg_id of the current selected message
+    conn = db.get_db()      # connection to relevant database
+    fname = None            # file path to retrieve file to be imported from
+    current_date = None     # current date is the 'date' date-view will update according to. (format: %Y-%m-%d)
+    current_msg_id = None   # msg_id of the current selected message
 
-    main_window = make_window()                 # main window
-    notes_window = None                         # window of the add/view notes popup
+    main_window = make_window()        # main window
+    notes_window = None                # window of the add/view notes popup
+
+    if not db.messages_is_empty():
+        current_date = db.get_earliest_date(conn)
 
     # Event loop
     while True:
