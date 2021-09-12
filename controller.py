@@ -40,7 +40,6 @@ def update_summary(window: sg.Window, conn= db.get_db()):
 
 def update_chat_table(records: List[dict], window: sg.Window, conn, cv_head=None):
     """Populates the CHAT-TABLE element with records at given date from database"""
-    #records = db.get_msgs_at_date(date, conn)           # returns msg records
     index = 0
     if cv_head is not None:
         for rec in records:
