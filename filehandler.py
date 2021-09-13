@@ -148,16 +148,18 @@ def get_ts_ref(lines):
     return guess_pattern_from_sample(samp)
 
 
+
 def sample_timestamps(lines):
     """returns a random sample of timestamp strings from imported records"""
     n = len(lines)
-    sample = [rdm.randint(0, len(lines)) for i in range(10)]
+    sample_size = 10 if n > 10 else n
+    sample = [rdm.randint(0, len(lines)) for i in range(sample_size)]
     # get timestamps from those records.
     ts = []
     for i in range(n):
         if i in sample:
             ln = lines[i]
-            metadata = ln[:ln.find(":", 15)]
+            metadata = ln[:ln.find(":", 20)]
             ts.append(metadata)
     return ts
 

@@ -21,43 +21,45 @@ def get_db():
         return None
 
 
+def create_tables(conn=get_db()):
+    cur = conn.cursor()
+    cur.execute('''CREATE TABLE IF NOT EXISTS Messages(
+                        msg_id          INTEGER PRIMARY KEY AUTOINCREMENT, 
+                        conv_id         INTEGER,
+                        import_ref      INTEGER,
+                        date_time       datetime,
+                        speaker_name    TEXT, 
+                        msg_content     TEXT,
+                        msg_notes       TEXT,
+                        UNIQUE(date_time, speaker_name, msg_content)
+                        )''')
+
+    cur.execute('''CREATE TABLE IF NOT EXISTS Tag 
+                        (msg_id         INTEGER, 
+                         tag_name       TEXT,
+                         PRIMARY KEY(msg_id, tag_name))''')
+
+    cur.execute('''CREATE TABLE IF NOT EXISTS Conversation
+                        (conv_id        INTEGER PRIMARY KEY,
+                         participants   TEXT NOT NULL,
+                         start_time     datetime
+                         end_time       datetime)''')
+
+    cur.execute('''CREATE TABLE IF NOT EXISTS TagList
+                        (tag_id         INTEGER PRIMARY KEY,
+                         tag_name       TEXT unique not null)''')
+
+    conn.commit()
+
+
 def insert_parsed(parsed_tuples: List[tuple], conn=get_db()):
     """
-    Creates Tables and inserts parsed message content into 'Message' Table
+    Inserts parsed message content into 'Message' Table
     :param conn:  database connection
     :param parsed_tuples:  output from parser, each tuple contains message elements
     :return:
     """
     cur = conn.cursor()
-
-    # create tables
-    cur.execute('''CREATE TABLE IF NOT EXISTS Messages(
-                    msg_id          INTEGER PRIMARY KEY AUTOINCREMENT, 
-                    conv_id         INTEGER,
-                    import_ref      INTEGER,
-                    date_time       datetime,
-                    speaker_name    TEXT, 
-                    msg_content     TEXT,
-                    msg_notes       TEXT,
-                    UNIQUE(date_time, speaker_name, msg_content)
-                    )''')
-
-    cur.execute('''CREATE TABLE IF NOT EXISTS Tag 
-                    (msg_id         INTEGER, 
-                     tag_name       TEXT,
-                     PRIMARY KEY(msg_id, tag_name))''')
-
-    cur.execute('''CREATE TABLE IF NOT EXISTS Conversation
-                    (conv_id        INTEGER PRIMARY KEY,
-                     participants   TEXT NOT NULL,
-                     start_time     datetime
-                     end_time       datetime)''')
-
-    cur.execute('''CREATE TABLE IF NOT EXISTS TagList
-                    (tag_id         INTEGER PRIMARY KEY,
-                     tag_name       TEXT unique not null)''')
-
-    # insert list of messages
     cur.executemany('''INSERT INTO Messages(import_ref, date_time, speaker_name, msg_content) 
                         VALUES (?, ?, ?, ?)''', parsed_tuples)
     conn.commit()
@@ -86,9 +88,16 @@ def generate_import_ref(conn=get_db()):
 
 
 def messages_is_empty(conn=get_db()) -> bool:
-    """ Indicates whether the database/ message table is currently empty"""
-    cur = conn.cursor().execute("""SELECT * FROM Messages""").fetchall()
-    return len(cur) == 0
+    """
+    Indicates whether the Messages table is currently empty.
+    If None is returned, indicates that a Messages table has not be created yet.
+    """
+    rv = conn.cursor().execute("""SELECT name FROM sqlite_master WHERE type='table' AND name='Messages'""").fetchone()
+    if rv is not None:
+        cur = conn.cursor().execute("""SELECT * FROM Messages""").fetchall()
+        return len(cur) == 0    # if true then, Messages is not populated
+    else:
+        return None
 
 
 def summary(conn=get_db()):
@@ -292,4 +301,4 @@ def query_db(query, args=(), one=False):
 
 if __name__ == "__main__":
     #print(get_message_count_by_dateyear(2018))
-    print(generate_import_ref())
+    print(messages_is_empty())
