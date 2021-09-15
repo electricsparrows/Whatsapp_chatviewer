@@ -148,7 +148,6 @@ def get_ts_ref(lines):
     return guess_pattern_from_sample(samp)
 
 
-
 def sample_timestamps(lines):
     """returns a random sample of timestamp strings from imported records"""
     n = len(lines)

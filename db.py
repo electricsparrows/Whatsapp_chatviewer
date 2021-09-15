@@ -60,9 +60,21 @@ def insert_parsed(parsed_tuples: List[tuple], conn=get_db()):
     :return:
     """
     cur = conn.cursor()
-    cur.executemany('''INSERT INTO Messages(import_ref, date_time, speaker_name, msg_content) 
-                        VALUES (?, ?, ?, ?)''', parsed_tuples)
+    success_count = 0
+    errors = []
+
+    for tup in parsed_tuples:
+        try:
+            cur.execute('''INSERT INTO Messages(import_ref, date_time, speaker_name, msg_content) 
+                            VALUES (?, ?, ?, ?)''', tup)
+            success_count += 1
+        except sqlite3.IntegrityError:
+            errors.append(tup)
+    #cur.executemany('''INSERT INTO Messages(import_ref, date_time, speaker_name, msg_content)
+                        # VALUES (?, ?, ?, ?)''', parsed_tuples)
     conn.commit()
+    print(success_count)
+    print(errors)
 
 
 def generate_import_ref(conn=get_db()):
@@ -299,6 +311,17 @@ def query_db(query, args=(), one=False):
     return (rv[0] if rv else None) if one else rv
 
 
+def getdata(y, m, d):
+    import datetime as dt
+    conn = get_db()
+    date = str(dt.date(y, m, d))
+    query = """SELECT strftime('%H:%M', date_time) as timestamp
+                FROM Messages
+                WHERE strftime('%Y-%m-%d', date_time) = ?;"""
+    rv = conn.cursor().execute(query, (date,)).fetchall()
+    return [d['timestamp'] for d in rv]
+
+
 if __name__ == "__main__":
     #print(get_message_count_by_dateyear(2018))
-    print(messages_is_empty())
+    print(getdata(2015, 11, 22))
