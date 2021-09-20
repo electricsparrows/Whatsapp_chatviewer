@@ -142,9 +142,9 @@ def get_content_str(ln: str, k: int):
 
 
 def get_ts_ref(lines):
-    # collect random sample, examine the timestamps
+    # collect random sample
     samp = sample_timestamps(lines)
-    # decide which timestamp pattern is correct.
+    # examines each TS in sample, decides which timestamp pattern is correct.
     return guess_pattern_from_sample(samp)
 
 
@@ -158,7 +158,7 @@ def sample_timestamps(lines):
     for i in range(n):
         if i in sample:
             ln = lines[i]
-            metadata = ln[:ln.find(":", 20)]
+            metadata = ln[:ln.find(":", 25)]
             ts.append(metadata)
     return ts
 
