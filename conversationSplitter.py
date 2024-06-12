@@ -2,6 +2,8 @@ import datetime
 import string
 from datetime import datetime as dt
 from pathlib import Path
+from typing import List
+
 import db
 
 # globals
@@ -12,7 +14,7 @@ in_file = p / "test02.txt"
 out_file = Path.cwd() / "out" / "output.xlsx"
 
 
-def conversation_splitter(data):
+def conversation_splitter(data : List[dict]):
     """
     :param data: data should be messages with same date, import_ref (indicating imported from the same file,
     therefore the same chat thread), and should have a consistent group of participants. It is assumed that
@@ -22,7 +24,7 @@ def conversation_splitter(data):
     :return: list of msg_id of messages classified as convo_heads
     """
     timegap_threshold = datetime.timedelta(seconds=3600)    # 1 hr gap between messages
-    convo_heads = []
+    convo_heads = [data[0]['msg_id']]
     prev_dtstr  = None
 
     for m in data:

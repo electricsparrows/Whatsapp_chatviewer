@@ -78,7 +78,7 @@ def make_window():
                               sg.Tab('Search', search_layout)
                               ]], k='-TABGROUP-', expand_x=True, expand_y=True)]]
 
-    return sg.Window('ChatViewer Demo', layout, finalize=True, metadata="main")
+    return sg.Window('ChatViewer Demo', layout, finalize=True, metadata="main", resizable=True)
 
 
 def make_notes_window():
@@ -96,18 +96,21 @@ def make_notes_window():
 
 
 def main():
-    # variables:
-    conn = db.get_db()      # connection to relevant database
+    # Establishes connection to the database and creates tables if not exist:
+    conn = db.get_db()
     db.create_tables(conn)
-    fname = None            # file path to retrieve file to be imported from
-    current_date = None     # current date is the 'date' date-view will update according to. (format: %Y-%m-%d)
-    current_msg_id = None   # msg_id of the current selected message
 
+    # Initialize variables:
+    fname = None            # file path to retrieve file to be imported from
+    current_msg_id = None   # msg_id of the current selected message
+    current_date = None     # current date is the 'date' date-view will update according to. (format: %Y-%m-%d)
+    # current date is set to date of the earliest message in the database
+    if not db.messages_is_empty():
+        current_date = db.get_earliest_date(conn)
+
+    # Initialize layouts for main window
     main_window = make_window()        # main window
     notes_window = None                # window of the add/view notes popup
-
-    if not db.messages_is_empty():  # if db table exists and is not empty
-        current_date = db.get_earliest_date(conn)
 
     # Event loop
     while True:
